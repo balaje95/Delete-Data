@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bulk Delete</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body, html {
@@ -178,8 +179,8 @@
             <option value="team">Team</option>
         </select>
 
-        <label for="file">Attach CSV / TXT File (one UID per line)</label>
-        <input type="file" id="file" accept=".csv,.txt" required>
+        <label for="file">Attach File (.csv, .txt, or .xlsx — UIDs in first column)</label>
+        <input type="file" id="file" accept=".csv,.txt,.xlsx,.xls" required>
 
         <div class="warning-banner">
             <strong>&#9888; Warning: Real deletes are irreversible.</strong>
@@ -239,10 +240,35 @@
             document.getElementById('submit-btn').disabled = !checkbox.checked;
         }
 
-        function readFileAsText(file) {
+        async function readFileAsText(file) {
+            const name = file.name.toLowerCase();
+            const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
+
+            if (isExcel) {
+                if (typeof XLSX === 'undefined') {
+                    throw new Error('Excel parser failed to load. Check your internet connection or save the file as CSV.');
+                }
+                const buffer = await file.arrayBuffer();
+                const workbook = XLSX.read(buffer, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                if (!firstSheet) throw new Error('Excel file has no sheets.');
+                const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, blankrows: false });
+                // Take first column of each row, convert everything to string
+                return rows.map(r => (r && r[0] != null ? String(r[0]) : '')).join('\n');
+            }
+
+            // Plain text path — also guard against accidentally-renamed binary files
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
+                reader.onload = () => {
+                    const text = reader.result;
+                    // Zip files (xlsx, docx, etc.) start with "PK"
+                    if (text.length > 2 && text.charCodeAt(0) === 0x50 && text.charCodeAt(1) === 0x4B) {
+                        reject(new Error('This looks like an Excel/zip file with the wrong extension. Rename it to .xlsx or save it as .csv.'));
+                        return;
+                    }
+                    resolve(text);
+                };
                 reader.onerror = () => reject(reader.error);
                 reader.readAsText(file);
             });
@@ -332,7 +358,8 @@
 
             const action = dryRun ? 'Check' : 'Delete';
             const note   = dryRun ? '\n\nDry run — no records will be deleted.' : '\n\nThis cannot be undone.';
-            if (!confirm(`${action} ${uids.length} ${module} record(s) in ${region}?${note}`)) {
+            const preview = uids.slice(0, 5).join('\n') + (uids.length > 5 ? `\n…and ${uids.length - 5} more` : '');
+            if (!confirm(`${action} ${uids.length} ${module} record(s) in ${region}?\n\nFirst UIDs:\n${preview}${note}`)) {
                 return;
             }
 
