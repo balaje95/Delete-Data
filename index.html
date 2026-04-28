@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Delete</title>
+    <style>
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #3B3B3B;
+            color: #fff;
+            min-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            width: 480px;
+            padding: 20px;
+            background-color: #444;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            text-align: center;
+            margin: 40px auto;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #F28544;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #555;
+            color: #fff;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        input::placeholder { color: #aaa; }
+        input[type="file"] { padding: 8px; cursor: pointer; }
+        button[type="submit"] {
+            padding: 12px 20px;
+            background-color: #F28544;
+            color: #fff;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 5px;
+        }
+        button[type="submit"]:hover { background-color: #D46A1E; }
+        button[type="submit"]:disabled { background-color: #888; cursor: not-allowed; }
+        .warning-banner {
+            background-color: rgba(242, 133, 68, 0.15);
+            border: 1px solid #F28544;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            color: #F28544;
+            text-align: left;
+        }
+        .warning-banner strong { display: block; margin-bottom: 3px; }
+        .confirm-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            text-align: left;
+        }
+        .confirm-row input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            padding: 0;
+            accent-color: #F28544;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bulk Delete</h1>
+        <form action="/bulkDelete" method="POST" enctype="multipart/form-data">
+            <label for="employee-id">Employee ID</label>
+            <input type="text" id="employee-id" name="employee-id" placeholder="Enter Employee ID" required>
+
+            <label for="region">Region</label>
+            <select id="region" name="region" required>
+                <option value="stagingv2">staging</option>
+                <option value="ap-southeast-2">ap-southeast-2</option>
+                <option value="apac-mumbai">apac-mumbai</option>
+                <option value="us-west-1c">us-west-1c</option>
+                <option value="eu-central-1">eu-central-1</option>
+                <option value="us-east-1">us-east-1</option>
+            </select>
+
+            <label for="apikey">API Key</label>
+            <input type="text" id="apikey" name="apikey" placeholder="Enter API Key" required>
+
+            <label for="module">Module</label>
+            <select id="module" name="module" required>
+                <option value="organization">Organization</option>
+                <option value="customers">Customer</option>
+                <option value="property">Property</option>
+                <option value="assets">Asset</option>
+                <option value="product">Parts and Services</option>
+                <option value="jobs">Job</option>
+                <option value="invoice">Invoice</option>
+                <option value="estimate">Quote/Estimate</option>
+                <option value="service_contract">Service Contract</option>
+                <option value="user">User</option>
+                <option value="team">Team</option>
+            </select>
+
+            <label for="file">Attach CSV / TXT File</label>
+            <input type="file" id="file" name="file" accept=".csv,.txt">
+
+            <div class="warning-banner">
+                <strong>&#9888; Warning: This action is irreversible.</strong>
+                All records matching the provided UIDs will be permanently deleted.
+            </div>
+
+            <div class="confirm-row">
+                <input type="checkbox" id="confirm-check" name="confirm" onchange="toggleSubmit(this)">
+                <label for="confirm-check" style="margin:0; cursor:pointer;">
+                    I understand this will permanently delete the selected records
+                </label>
+            </div>
+
+            <button type="submit" id="submit-btn" disabled>Bulk Delete</button>
+        </form>
+    </div>
+    <script>
+        function toggleSubmit(checkbox) {
+            document.getElementById('submit-btn').disabled = !checkbox.checked;
+        }
+    </script>
+</body>
+</html>
