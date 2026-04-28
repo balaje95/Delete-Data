@@ -3,225 +3,545 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Delete</title>
+    <title>Bulk Delete — Zuper</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; }
-        body, html {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #3B3B3B;
-            color: #fff;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --orange:       #E8622A;
+            --orange-light: #F5986A;
+            --orange-dim:   rgba(232, 98, 42, 0.12);
+            --charcoal:     #2C2C2C;
+            --surface:      #1E1E1E;
+            --card:         #272727;
+            --border:       rgba(255,255,255,0.08);
+            --border-focus: rgba(232, 98, 42, 0.5);
+            --text:         #F0F0F0;
+            --muted:        #9A9A9A;
+            --success:      #4EC876;
+            --danger:       #FF5C5C;
+            --radius:       10px;
+        }
+
+        html, body {
             min-height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 16px 60px;
+        }
+
+        /* ── Header ── */
+        header {
+            width: 100%;
+            max-width: 560px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        header img { height: 36px; }
+
+        .header-badge {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 12px;
+        }
+
+        /* ── Card ── */
+        .card {
+            width: 100%;
+            max-width: 560px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 22px 28px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-header-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            background: var(--orange-dim);
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
-        .container {
-            width: 520px;
-            padding: 24px;
-            background-color: #444;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            text-align: center;
-            margin: 40px auto;
+
+        .card-header-icon svg { width: 18px; height: 18px; }
+
+        .card-header h1 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text);
         }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #F28544;
+
+        .card-header p {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
         }
+
+        .card-body { padding: 24px 28px; }
+
+        /* ── Form grid ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.span2 { grid-column: 1 / -1; }
+
         label {
-            display: block;
-            margin: 10px 0 5px;
-            font-size: 14px;
-            text-align: left;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
+
         input, select {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            background-color: #555;
-            color: #fff;
-            font-family: Arial, sans-serif;
+            padding: 10px 13px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
             font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s;
+            appearance: none;
+            -webkit-appearance: none;
         }
-        input::placeholder { color: #aaa; }
-        input[type="file"] { padding: 8px; cursor: pointer; }
-        button {
-            padding: 12px 20px;
-            background-color: #F28544;
-            color: #fff;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            width: 100%;
-            margin-top: 5px;
-            font-family: Arial, sans-serif;
+
+        input:focus, select:focus { border-color: var(--border-focus); }
+        input::placeholder { color: #555; }
+        input[type="password"] { letter-spacing: 0.1em; }
+        input[type="password"]::placeholder { letter-spacing: 0; }
+
+        .select-wrap { position: relative; }
+        .select-wrap::after {
+            content: '';
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            translate: 0 -50%;
+            width: 0; height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid var(--muted);
+            pointer-events: none;
         }
-        button:hover:not(:disabled) { background-color: #D46A1E; }
-        button:disabled { background-color: #888; cursor: not-allowed; }
-        .warning-banner {
-            background-color: rgba(242, 133, 68, 0.15);
-            border: 1px solid #F28544;
-            border-radius: 6px;
-            padding: 10px 14px;
-            margin-bottom: 18px;
-            font-size: 13px;
-            color: #F28544;
-            text-align: left;
-        }
-        .warning-banner strong { display: block; margin-bottom: 3px; }
-        .confirm-row {
+
+        /* File input */
+        .file-label {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
-            font-size: 13px;
-            text-align: left;
+            gap: 10px;
+            padding: 10px 13px;
+            background: var(--surface);
+            border: 1px dashed rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.15s;
         }
-        .confirm-row input[type="checkbox"] {
-            width: auto;
+        .file-label:hover { border-color: var(--orange-light); }
+        .file-label-icon { color: var(--muted); flex-shrink: 0; }
+        .file-label-text { font-size: 13px; color: var(--muted); }
+        .file-label-text span { color: var(--orange-light); font-weight: 500; }
+        input[type="file"] { display: none; }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 22px 0;
+        }
+
+        /* Warning */
+        .warning {
+            display: flex;
+            gap: 10px;
+            padding: 12px 14px;
+            background: rgba(255, 92, 92, 0.07);
+            border: 1px solid rgba(255, 92, 92, 0.25);
+            border-radius: 8px;
+            margin-bottom: 18px;
+        }
+        .warning svg { flex-shrink: 0; margin-top: 1px; }
+        .warning-body { font-size: 12.5px; color: #FF9090; line-height: 1.5; }
+        .warning-body strong { display: block; color: #FF6B6B; font-weight: 600; margin-bottom: 2px; }
+
+        /* Toggles */
+        .toggle-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .toggle-row:last-of-type { margin-bottom: 0; }
+
+        /* Custom checkbox */
+        .cb-wrap {
+            position: relative;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .cb-wrap input[type="checkbox"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
             margin: 0;
-            accent-color: #F28544;
+            padding: 0;
         }
-        .results {
+        .cb-box {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+            border: 1.5px solid rgba(255,255,255,0.2);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, border-color 0.15s;
+            pointer-events: none;
+        }
+        .cb-wrap input:checked ~ .cb-box {
+            background: var(--orange);
+            border-color: var(--orange);
+        }
+        .cb-box svg { display: none; }
+        .cb-wrap input:checked ~ .cb-box svg { display: block; }
+
+        .toggle-text { font-size: 13px; line-height: 1.5; color: var(--text); }
+        .toggle-text strong { font-weight: 600; }
+        .toggle-text em { font-style: normal; color: var(--muted); font-size: 12px; }
+
+        /* Pill indicator */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 9px;
+            border-radius: 20px;
+            margin-left: 6px;
+        }
+        .pill.safe { background: rgba(78, 200, 118, 0.12); color: var(--success); }
+        .pill.danger { background: rgba(255, 92, 92, 0.12); color: var(--danger); }
+
+        /* Run button */
+        .run-btn {
+            width: 100%;
             margin-top: 20px;
-            padding: 14px;
-            background-color: #3B3B3B;
-            border-radius: 6px;
-            text-align: left;
-            font-size: 13px;
+            padding: 13px;
+            background: var(--orange);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .run-btn:hover:not(:disabled) { background: #D4541F; }
+        .run-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* ── Results Panel ── */
+        .results {
             display: none;
+            margin-top: 16px;
+            padding: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
         }
         .results.visible { display: block; }
+
+        .stats {
+            display: flex;
+            gap: 0;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .stat {
+            flex: 1;
+            padding: 12px 16px;
+            text-align: center;
+            border-right: 1px solid var(--border);
+        }
+        .stat:last-child { border-right: none; }
+        .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+        .stat-value { font-size: 22px; font-weight: 700; }
+        .stat.success .stat-value { color: var(--success); }
+        .stat.failed  .stat-value { color: var(--danger); }
+
         .progress-bar {
             width: 100%;
-            height: 8px;
-            background-color: #555;
-            border-radius: 4px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
             overflow: hidden;
-            margin: 10px 0;
+            margin-bottom: 14px;
         }
         .progress-fill {
             height: 100%;
-            background-color: #F28544;
+            background: var(--orange);
             width: 0%;
             transition: width 0.2s ease;
+            border-radius: 2px;
         }
-        .stats {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 12px;
-            font-size: 13px;
-        }
-        .stat { flex: 1; }
-        .stat-label { color: #aaa; font-size: 11px; text-transform: uppercase; }
-        .stat-value { font-size: 18px; font-weight: bold; }
-        .stat.success .stat-value { color: #6BCB77; }
-        .stat.failed .stat-value { color: #FF6B6B; }
+
         .log {
             max-height: 200px;
             overflow-y: auto;
-            background-color: #2B2B2B;
-            padding: 10px;
-            border-radius: 4px;
-            font-family: Menlo, Monaco, monospace;
-            font-size: 11px;
-            line-height: 1.5;
+            background: #161616;
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 11.5px;
+            line-height: 1.6;
         }
-        .log-row { padding: 2px 0; }
-        .log-row.ok { color: #6BCB77; }
-        .log-row.err { color: #FF6B6B; }
-        .download-btn {
-            margin-top: 10px;
-            background-color: #555;
-            font-size: 13px;
-            padding: 8px 12px;
+        .log::-webkit-scrollbar { width: 4px; }
+        .log::-webkit-scrollbar-track { background: transparent; }
+        .log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .log-row { padding: 1px 0; }
+        .log-row.ok  { color: var(--success); }
+        .log-row.err { color: var(--danger); }
+
+        .result-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+        .action-btn {
+            flex: 1;
+            padding: 9px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
         }
-        .download-btn:hover:not(:disabled) { background-color: #666; }
+        .action-btn:hover:not(:disabled) { background: rgba(255,255,255,0.09); }
+        .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .proceed-btn {
+            flex: 1;
+            padding: 9px 14px;
+            background: rgba(255, 92, 92, 0.1);
+            border: 1px solid rgba(255, 92, 92, 0.3);
+            border-radius: 8px;
+            color: var(--danger);
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .proceed-btn:hover:not(:disabled) { background: rgba(255, 92, 92, 0.18); }
+        .proceed-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Bulk Delete</h1>
 
-        <label for="employee-id">Employee ID</label>
-        <input type="text" id="employee-id" placeholder="Enter Employee ID" required>
+    <header>
+        <img src="Zuper-Horizontal-Logo.png" alt="Zuper">
+        <span class="header-badge">Internal Tool</span>
+    </header>
 
-        <label for="region">Region</label>
-        <select id="region" required>
-            <option value="stagingv2">Staging</option>
-            <option value="us-east-1">us-east-1</option>
-            <option value="us-west-1c">us-west-1c</option>
-        </select>
-
-        <label for="apikey">API Key</label>
-        <input type="password" id="apikey" placeholder="Enter API Key" required>
-
-        <label for="module">Module</label>
-        <select id="module" required>
-            <option value="organization">Organization</option>
-            <option value="customers">Customer</option>
-            <option value="property">Property</option>
-            <option value="assets">Asset</option>
-            <option value="product">Parts and Services</option>
-            <option value="jobs">Job</option>
-            <option value="invoice">Invoice</option>
-            <option value="estimate">Quote/Estimate</option>
-            <option value="service_contract">Service Contract</option>
-            <option value="user">User</option>
-            <option value="team">Team</option>
-        </select>
-
-        <label for="file">Attach File (.csv, .txt, or .xlsx — UIDs in first column)</label>
-        <input type="file" id="file" accept=".csv,.txt,.xlsx,.xls" required>
-
-        <div class="warning-banner">
-            <strong>&#9888; Warning: Real deletes are irreversible.</strong>
-            Use <em>Dry run</em> first to verify everything works without deleting anything.
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-icon">
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 3H13M3 5H17M15 5L14.25 14.6C14.11 16.46 14.04 17.39 13.57 18.07C13.35 18.39 13.06 18.66 12.72 18.85C12.01 19.25 11.08 19.25 9.22 19.25H10.78C8.92 19.25 7.99 19.25 7.28 18.85C6.94 18.66 6.65 18.39 6.43 18.07C5.96 17.39 5.89 16.46 5.75 14.6L5 5" stroke="#E8622A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div>
+                <h1>Bulk Delete</h1>
+                <p>Permanently remove records by UID from any module</p>
+            </div>
         </div>
 
-        <div class="confirm-row">
-            <input type="checkbox" id="dryrun-check" checked>
-            <label for="dryrun-check" style="margin:0; cursor:pointer;">
-                <strong>Dry run</strong> &mdash; check records without deleting (safe)
-            </label>
-        </div>
+        <div class="card-body">
+            <div class="form-grid">
 
-        <div class="confirm-row">
-            <input type="checkbox" id="confirm-check" onchange="toggleSubmit(this)">
-            <label for="confirm-check" style="margin:0; cursor:pointer;">
-                I understand this will permanently delete the selected records (when dry run is off)
-            </label>
-        </div>
-
-        <button type="button" id="submit-btn" disabled onclick="runBulkDelete()">Run</button>
-
-        <div class="results" id="results">
-            <div class="stats">
-                <div class="stat">
-                    <div class="stat-label">Total</div>
-                    <div class="stat-value" id="stat-total">0</div>
+                <div class="form-group">
+                    <label for="employee-id">Employee ID</label>
+                    <input type="text" id="employee-id" placeholder="e.g. EMP-1234" required>
                 </div>
-                <div class="stat success">
-                    <div class="stat-label">Deleted</div>
-                    <div class="stat-value" id="stat-success">0</div>
+
+                <div class="form-group">
+                    <label for="region">Region</label>
+                    <div class="select-wrap">
+                        <select id="region" required>
+                            <option value="stagingv2">Staging</option>
+                            <option value="us-east-1">us-east-1</option>
+                            <option value="us-west-1c">us-west-1c</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="stat failed">
-                    <div class="stat-label">Failed</div>
-                    <div class="stat-value" id="stat-failed">0</div>
+
+                <div class="form-group span2">
+                    <label for="apikey">API Key</label>
+                    <input type="password" id="apikey" placeholder="Enter API key" required>
+                </div>
+
+                <div class="form-group span2">
+                    <label for="module">Module</label>
+                    <div class="select-wrap">
+                        <select id="module" required>
+                            <option value="organization">Organization</option>
+                            <option value="customers">Customer</option>
+                            <option value="property">Property</option>
+                            <option value="assets">Asset</option>
+                            <option value="product">Parts and Services</option>
+                            <option value="jobs">Job</option>
+                            <option value="invoice">Invoice</option>
+                            <option value="estimate">Quote / Estimate</option>
+                            <option value="service_contract">Service Contract</option>
+                            <option value="user">User</option>
+                            <option value="team">Team</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group span2">
+                    <label>UID File</label>
+                    <label class="file-label" for="file" id="file-label">
+                        <span class="file-label-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6M9 2l4 4M9 2v4h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="file-label-text" id="file-label-text"><span>Choose file</span> or drag & drop — .csv, .txt, .xlsx</span>
+                    </label>
+                    <input type="file" id="file" accept=".csv,.txt,.xlsx,.xls" required onchange="updateFileLabel(this)">
+                </div>
+
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="warning">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-top:1px">
+                    <path d="M8 1.5L1 13.5h14L8 1.5z" stroke="#FF6B6B" stroke-width="1.2" stroke-linejoin="round"/>
+                    <path d="M8 6v4M8 11.5v.5" stroke="#FF6B6B" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                <div class="warning-body">
+                    <strong>Real deletes are irreversible.</strong>
+                    Always use Dry run first to verify records exist before deleting anything.
                 </div>
             </div>
-            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-            <div class="log" id="log"></div>
-            <button type="button" id="proceed-delete-btn" onclick="proceedToDelete()" style="display:none; margin-top:10px;">Proceed: Delete found records</button>
-            <button type="button" class="download-btn" id="download-btn" onclick="downloadLog()" style="display:none;">Download Log (CSV)</button>
+
+            <div class="toggle-row">
+                <div class="cb-wrap">
+                    <input type="checkbox" id="dryrun-check" checked>
+                    <div class="cb-box">
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                </div>
+                <div class="toggle-text">
+                    <strong>Dry run</strong>
+                    <span class="pill safe" id="mode-pill">● Safe</span><br>
+                    <em>Checks records exist without deleting anything.</em>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="cb-wrap">
+                    <input type="checkbox" id="confirm-check" onchange="toggleSubmit(this)">
+                    <div class="cb-box">
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                </div>
+                <div class="toggle-text">
+                    I understand this will permanently delete selected records when dry run is off.
+                </div>
+            </div>
+
+            <button type="button" id="submit-btn" class="run-btn" disabled onclick="runBulkDelete()">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 3l8 4.5L4 12V3z" fill="white"/></svg>
+                Run
+            </button>
+
+            <div class="results" id="results">
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value" id="stat-total">0</div>
+                    </div>
+                    <div class="stat success">
+                        <div class="stat-label" id="lbl-success">Found</div>
+                        <div class="stat-value" id="stat-success">0</div>
+                    </div>
+                    <div class="stat failed">
+                        <div class="stat-label" id="lbl-failed">Not Found</div>
+                        <div class="stat-value" id="stat-failed">0</div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+
+                <div class="log" id="log"></div>
+
+                <div class="result-actions">
+                    <button type="button" class="proceed-btn" id="proceed-delete-btn" onclick="proceedToDelete()" style="display:none;">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Proceed with delete
+                    </button>
+                    <button type="button" class="action-btn" id="download-btn" onclick="downloadLog()" style="display:none;">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6.5l3 3 3-3M1.5 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Download Log
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -231,39 +551,51 @@
             'us-east-1':  'https://us-east-1.zuperpro.com/api/',
             'us-west-1c': 'https://us-west-1c.zuperpro.com/api/'
         };
-
-        // throttle delay between calls (ms) — prevents 429s
         const DELAY_MS = 150;
-
         let logRows = [];
+        let dryRunContext = null;
+
+        function updateFileLabel(input) {
+            const labelText = document.getElementById('file-label-text');
+            if (input.files && input.files[0]) {
+                labelText.innerHTML = '<span>' + input.files[0].name + '</span>';
+            } else {
+                labelText.innerHTML = '<span>Choose file</span> or drag & drop — .csv, .txt, .xlsx';
+            }
+        }
 
         function toggleSubmit(checkbox) {
             document.getElementById('submit-btn').disabled = !checkbox.checked;
         }
 
+        // Update pill when dryrun checkbox toggles
+        document.getElementById('dryrun-check').addEventListener('change', function() {
+            const pill = document.getElementById('mode-pill');
+            if (this.checked) {
+                pill.className = 'pill safe';
+                pill.textContent = '● Safe';
+            } else {
+                pill.className = 'pill danger';
+                pill.textContent = '● Live';
+            }
+        });
+
         async function readFileAsText(file) {
             const name = file.name.toLowerCase();
             const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
-
             if (isExcel) {
-                if (typeof XLSX === 'undefined') {
-                    throw new Error('Excel parser failed to load. Check your internet connection or save the file as CSV.');
-                }
+                if (typeof XLSX === 'undefined') throw new Error('Excel parser failed to load. Check your internet connection or save the file as CSV.');
                 const buffer = await file.arrayBuffer();
                 const workbook = XLSX.read(buffer, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 if (!firstSheet) throw new Error('Excel file has no sheets.');
                 const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, blankrows: false });
-                // Take first column of each row, convert everything to string
                 return rows.map(r => (r && r[0] != null ? String(r[0]) : '')).join('\n');
             }
-
-            // Plain text path — also guard against accidentally-renamed binary files
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => {
                     const text = reader.result;
-                    // Zip files (xlsx, docx, etc.) start with "PK"
                     if (text.length > 2 && text.charCodeAt(0) === 0x50 && text.charCodeAt(1) === 0x4B) {
                         reject(new Error('This looks like an Excel/zip file with the wrong extension. Rename it to .xlsx or save it as .csv.'));
                         return;
@@ -278,53 +610,43 @@
         function parseUIDs(text) {
             return text
                 .split(/\r?\n/)
-                .map(line => line.split(',')[0].trim())  // first column if CSV
-                .filter(line => line && !/^uid$|^id$|^_uid$/i.test(line));  // drop empty + likely headers
+                .map(line => line.split(',')[0].trim())
+                .filter(line => line && !/^uid$|^id$|^_uid$/i.test(line));
         }
 
         function appendLog(uid, ok, message) {
             const log = document.getElementById('log');
             const row = document.createElement('div');
             row.className = 'log-row ' + (ok ? 'ok' : 'err');
-            row.textContent = `${ok ? '✓' : '✗'} ${uid} — ${message}`;
+            row.textContent = (ok ? '✓' : '✗') + ' ' + uid + ' — ' + message;
             log.appendChild(row);
             log.scrollTop = log.scrollHeight;
             logRows.push({ uid, status: ok ? 'success' : 'failed', message });
         }
 
         async function deleteOne(baseUrl, module, uid, apiKey, dryRun) {
-            const url = `${baseUrl}${module}/${encodeURIComponent(uid)}`;
+            const url = baseUrl + module + '/' + encodeURIComponent(uid);
             const method = dryRun ? 'GET' : 'DELETE';
             try {
                 const res = await fetch(url, {
                     method,
-                    headers: {
-                        'x-api-key': apiKey,
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' }
                 });
-                if (res.ok) return { ok: true, message: dryRun ? `${res.status} found` : `${res.status} OK` };
+                if (res.ok) return { ok: true, message: dryRun ? res.status + ' found' : res.status + ' OK' };
                 let detail = '';
                 try {
                     const body = await res.json();
                     detail = body.message || body.error || JSON.stringify(body).slice(0, 120);
-                } catch {
-                    detail = await res.text().then(t => t.slice(0, 120)).catch(() => '');
-                }
-                return { ok: false, message: `${res.status} ${detail}` };
+                } catch { detail = await res.text().then(t => t.slice(0, 120)).catch(() => ''); }
+                return { ok: false, message: res.status + ' ' + detail };
             } catch (err) {
-                return { ok: false, message: `Network error: ${err.message}` };
+                return { ok: false, message: 'Network error: ' + err.message };
             }
         }
-
-        // State captured from a dry run, used by the Proceed button
-        let dryRunContext = null;
 
         async function executeRun(baseUrl, module, apiKey, uids, dryRun) {
             const submitBtn  = document.getElementById('submit-btn');
             const proceedBtn = document.getElementById('proceed-delete-btn');
-
-            // Reset results UI
             logRows = [];
             document.getElementById('log').innerHTML = '';
             document.getElementById('download-btn').style.display = 'none';
@@ -332,52 +654,38 @@
             document.getElementById('results').classList.add('visible');
             document.getElementById('progress-fill').style.width = '0%';
 
-            // Stat labels for this run mode
-            document.querySelector('.stat.success .stat-label').textContent = dryRun ? 'Found' : 'Deleted';
-            document.querySelector('.stat.failed .stat-label').textContent  = dryRun ? 'Not found' : 'Failed';
-            document.getElementById('stat-total').textContent = uids.length;
+            document.getElementById('lbl-success').textContent = dryRun ? 'Found' : 'Deleted';
+            document.getElementById('lbl-failed').textContent  = dryRun ? 'Not Found' : 'Failed';
+            document.getElementById('stat-total').textContent   = uids.length;
             document.getElementById('stat-success').textContent = '0';
-            document.getElementById('stat-failed').textContent = '0';
+            document.getElementById('stat-failed').textContent  = '0';
 
             submitBtn.disabled = true;
-            proceedBtn.disabled = true;
-            submitBtn.textContent = dryRun ? 'Checking…' : 'Deleting…';
+            submitBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="5.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M7.5 2a5.5 5.5 0 015.5 5.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>' + (dryRun ? ' Checking…' : ' Deleting…');
 
             const foundUids = [];
             let success = 0, failed = 0;
             for (let i = 0; i < uids.length; i++) {
                 const uid = uids[i];
                 const result = await deleteOne(baseUrl, module, uid, apiKey, dryRun);
-                if (result.ok) {
-                    success++;
-                    if (dryRun) foundUids.push(uid);
-                    document.getElementById('stat-success').textContent = success;
-                } else {
-                    failed++;
-                    document.getElementById('stat-failed').textContent = failed;
-                }
+                if (result.ok) { success++; if (dryRun) foundUids.push(uid); document.getElementById('stat-success').textContent = success; }
+                else { failed++; document.getElementById('stat-failed').textContent = failed; }
                 appendLog(uid, result.ok, result.message);
-
-                const pct = ((i + 1) / uids.length) * 100;
-                document.getElementById('progress-fill').style.width = pct + '%';
-
-                if (DELAY_MS > 0 && i < uids.length - 1) {
-                    await new Promise(r => setTimeout(r, DELAY_MS));
-                }
+                document.getElementById('progress-fill').style.width = (((i + 1) / uids.length) * 100) + '%';
+                if (DELAY_MS > 0 && i < uids.length - 1) await new Promise(r => setTimeout(r, DELAY_MS));
             }
 
-            submitBtn.textContent = 'Run';
-            // Force re-confirmation for next run
+            submitBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 3l8 4.5L4 12V3z" fill="white"/></svg> Run';
             document.getElementById('confirm-check').checked = false;
             submitBtn.disabled = true;
-            proceedBtn.disabled = false;
-            document.getElementById('download-btn').style.display = 'block';
+            document.getElementById('download-btn').style.display = 'flex';
 
-            // If dry run found records, surface the proceed button
             if (dryRun && foundUids.length > 0) {
                 dryRunContext = { baseUrl, module, apiKey, foundUids, region: document.getElementById('region').value };
-                proceedBtn.textContent = `Proceed: Delete ${foundUids.length} found record(s) →`;
-                proceedBtn.style.display = 'block';
+                proceedBtn.textContent = '';
+                proceedBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Delete ' + foundUids.length + ' found record(s)';
+                proceedBtn.style.display = 'flex';
+                proceedBtn.disabled = false;
             } else {
                 dryRunContext = null;
             }
@@ -391,54 +699,32 @@
             const fileInput  = document.getElementById('file');
             const dryRun     = document.getElementById('dryrun-check').checked;
 
-            if (!employeeId || !apiKey || !fileInput.files[0]) {
-                alert('Please fill in all fields and select a file.');
-                return;
-            }
+            if (!employeeId || !apiKey || !fileInput.files[0]) { alert('Please fill in all fields and select a file.'); return; }
 
             const baseUrl = REGION_URLS[region];
-            if (!baseUrl) {
-                alert('Unknown region.');
-                return;
-            }
+            if (!baseUrl) { alert('Unknown region.'); return; }
 
             let uids;
             try {
                 const text = await readFileAsText(fileInput.files[0]);
                 uids = parseUIDs(text);
-            } catch (err) {
-                alert('Could not read file: ' + err.message);
-                return;
-            }
+            } catch (err) { alert('Could not read file: ' + err.message); return; }
 
-            if (uids.length === 0) {
-                alert('No UIDs found in file.');
-                return;
-            }
+            if (uids.length === 0) { alert('No UIDs found in file.'); return; }
 
-            const action = dryRun ? 'Check' : 'Delete';
-            const note   = dryRun ? '\n\nDry run — no records will be deleted.' : '\n\nThis cannot be undone.';
-            const preview = uids.slice(0, 5).join('\n') + (uids.length > 5 ? `\n…and ${uids.length - 5} more` : '');
-            if (!confirm(`${action} ${uids.length} ${module} record(s) in ${region}?\n\nFirst UIDs:\n${preview}${note}`)) {
-                return;
-            }
+            const action  = dryRun ? 'Check' : 'Delete';
+            const note    = dryRun ? '\n\nDry run — no records will be deleted.' : '\n\nThis cannot be undone.';
+            const preview = uids.slice(0, 5).join('\n') + (uids.length > 5 ? '\n…and ' + (uids.length - 5) + ' more' : '');
+            if (!confirm(action + ' ' + uids.length + ' ' + module + ' record(s) in ' + region + '?\n\nFirst UIDs:\n' + preview + note)) return;
 
             await executeRun(baseUrl, module, apiKey, uids, dryRun);
         }
 
         async function proceedToDelete() {
-            if (!dryRunContext) {
-                alert('No dry-run results to proceed from. Run a dry run first.');
-                return;
-            }
+            if (!dryRunContext) { alert('No dry-run results to proceed from. Run a dry run first.'); return; }
             const { baseUrl, module, apiKey, foundUids, region } = dryRunContext;
-
-            const preview = foundUids.slice(0, 5).join('\n') + (foundUids.length > 5 ? `\n…and ${foundUids.length - 5} more` : '');
-            if (!confirm(`Permanently DELETE ${foundUids.length} record(s) verified by dry run?\n\nModule: ${module}\nRegion: ${region}\n\nFirst UIDs:\n${preview}\n\nThis cannot be undone.`)) {
-                return;
-            }
-
-            // One-time use — prevent accidental re-click
+            const preview = foundUids.slice(0, 5).join('\n') + (foundUids.length > 5 ? '\n…and ' + (foundUids.length - 5) + ' more' : '');
+            if (!confirm('Permanently DELETE ' + foundUids.length + ' record(s) verified by dry run?\n\nModule: ' + module + '\nRegion: ' + region + '\n\nFirst UIDs:\n' + preview + '\n\nThis cannot be undone.')) return;
             dryRunContext = null;
             await executeRun(baseUrl, module, apiKey, foundUids, false);
         }
@@ -446,13 +732,13 @@
         function downloadLog() {
             const header = 'uid,status,message\n';
             const csv = header + logRows.map(r =>
-                `"${r.uid.replace(/"/g, '""')}","${r.status}","${(r.message || '').replace(/"/g, '""')}"`
+                '"' + r.uid.replace(/"/g, '""') + '","' + r.status + '","' + (r.message || '').replace(/"/g, '""') + '"'
             ).join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `bulk-delete-log-${Date.now()}.csv`;
+            a.download = 'bulk-delete-log-' + Date.now() + '.csv';
             a.click();
             URL.revokeObjectURL(url);
         }
