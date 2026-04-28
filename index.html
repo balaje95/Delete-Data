@@ -220,6 +220,7 @@
             </div>
             <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
             <div class="log" id="log"></div>
+            <button type="button" id="proceed-delete-btn" onclick="proceedToDelete()" style="display:none; margin-top:10px;">Proceed: Delete found records</button>
             <button type="button" class="download-btn" id="download-btn" onclick="downloadLog()" style="display:none;">Download Log (CSV)</button>
         </div>
     </div>
@@ -316,13 +317,78 @@
             }
         }
 
+        // State captured from a dry run, used by the Proceed button
+        let dryRunContext = null;
+
+        async function executeRun(baseUrl, module, apiKey, uids, dryRun) {
+            const submitBtn  = document.getElementById('submit-btn');
+            const proceedBtn = document.getElementById('proceed-delete-btn');
+
+            // Reset results UI
+            logRows = [];
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('download-btn').style.display = 'none';
+            proceedBtn.style.display = 'none';
+            document.getElementById('results').classList.add('visible');
+            document.getElementById('progress-fill').style.width = '0%';
+
+            // Stat labels for this run mode
+            document.querySelector('.stat.success .stat-label').textContent = dryRun ? 'Found' : 'Deleted';
+            document.querySelector('.stat.failed .stat-label').textContent  = dryRun ? 'Not found' : 'Failed';
+            document.getElementById('stat-total').textContent = uids.length;
+            document.getElementById('stat-success').textContent = '0';
+            document.getElementById('stat-failed').textContent = '0';
+
+            submitBtn.disabled = true;
+            proceedBtn.disabled = true;
+            submitBtn.textContent = dryRun ? 'Checking…' : 'Deleting…';
+
+            const foundUids = [];
+            let success = 0, failed = 0;
+            for (let i = 0; i < uids.length; i++) {
+                const uid = uids[i];
+                const result = await deleteOne(baseUrl, module, uid, apiKey, dryRun);
+                if (result.ok) {
+                    success++;
+                    if (dryRun) foundUids.push(uid);
+                    document.getElementById('stat-success').textContent = success;
+                } else {
+                    failed++;
+                    document.getElementById('stat-failed').textContent = failed;
+                }
+                appendLog(uid, result.ok, result.message);
+
+                const pct = ((i + 1) / uids.length) * 100;
+                document.getElementById('progress-fill').style.width = pct + '%';
+
+                if (DELAY_MS > 0 && i < uids.length - 1) {
+                    await new Promise(r => setTimeout(r, DELAY_MS));
+                }
+            }
+
+            submitBtn.textContent = 'Run';
+            // Force re-confirmation for next run
+            document.getElementById('confirm-check').checked = false;
+            submitBtn.disabled = true;
+            proceedBtn.disabled = false;
+            document.getElementById('download-btn').style.display = 'block';
+
+            // If dry run found records, surface the proceed button
+            if (dryRun && foundUids.length > 0) {
+                dryRunContext = { baseUrl, module, apiKey, foundUids, region: document.getElementById('region').value };
+                proceedBtn.textContent = `Proceed: Delete ${foundUids.length} found record(s) →`;
+                proceedBtn.style.display = 'block';
+            } else {
+                dryRunContext = null;
+            }
+        }
+
         async function runBulkDelete() {
             const employeeId = document.getElementById('employee-id').value.trim();
             const region     = document.getElementById('region').value;
             const apiKey     = document.getElementById('apikey').value.trim();
             const module     = document.getElementById('module').value;
             const fileInput  = document.getElementById('file');
-            const submitBtn  = document.getElementById('submit-btn');
             const dryRun     = document.getElementById('dryrun-check').checked;
 
             if (!employeeId || !apiKey || !fileInput.files[0]) {
@@ -335,12 +401,6 @@
                 alert('Unknown region.');
                 return;
             }
-
-            // reset results
-            logRows = [];
-            document.getElementById('log').innerHTML = '';
-            document.getElementById('download-btn').style.display = 'none';
-            document.getElementById('results').classList.add('visible');
 
             let uids;
             try {
@@ -363,43 +423,24 @@
                 return;
             }
 
-            submitBtn.disabled = true;
-            submitBtn.textContent = dryRun ? 'Checking…' : 'Deleting…';
+            await executeRun(baseUrl, module, apiKey, uids, dryRun);
+        }
 
-            // Update stat labels for dry run
-            document.querySelector('.stat.success .stat-label').textContent = dryRun ? 'Found' : 'Deleted';
-            document.querySelector('.stat.failed .stat-label').textContent  = dryRun ? 'Not found' : 'Failed';
+        async function proceedToDelete() {
+            if (!dryRunContext) {
+                alert('No dry-run results to proceed from. Run a dry run first.');
+                return;
+            }
+            const { baseUrl, module, apiKey, foundUids, region } = dryRunContext;
 
-            document.getElementById('stat-total').textContent = uids.length;
-            document.getElementById('stat-success').textContent = '0';
-            document.getElementById('stat-failed').textContent = '0';
-
-            let success = 0, failed = 0;
-            for (let i = 0; i < uids.length; i++) {
-                const uid = uids[i];
-                const result = await deleteOne(baseUrl, module, uid, apiKey, dryRun);
-                if (result.ok) {
-                    success++;
-                    document.getElementById('stat-success').textContent = success;
-                } else {
-                    failed++;
-                    document.getElementById('stat-failed').textContent = failed;
-                }
-                appendLog(uid, result.ok, result.message);
-
-                const pct = ((i + 1) / uids.length) * 100;
-                document.getElementById('progress-fill').style.width = pct + '%';
-
-                if (DELAY_MS > 0 && i < uids.length - 1) {
-                    await new Promise(r => setTimeout(r, DELAY_MS));
-                }
+            const preview = foundUids.slice(0, 5).join('\n') + (foundUids.length > 5 ? `\n…and ${foundUids.length - 5} more` : '');
+            if (!confirm(`Permanently DELETE ${foundUids.length} record(s) verified by dry run?\n\nModule: ${module}\nRegion: ${region}\n\nFirst UIDs:\n${preview}\n\nThis cannot be undone.`)) {
+                return;
             }
 
-            submitBtn.textContent = 'Run';
-            submitBtn.disabled = false;
-            document.getElementById('confirm-check').checked = false;
-            submitBtn.disabled = true;
-            document.getElementById('download-btn').style.display = 'block';
+            // One-time use — prevent accidental re-click
+            dryRunContext = null;
+            await executeRun(baseUrl, module, apiKey, foundUids, false);
         }
 
         function downloadLog() {
