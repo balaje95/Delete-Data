@@ -18,8 +18,8 @@
             justify-content: center;
         }
         .container {
-            width: 480px;
-            padding: 20px;
+            width: 520px;
+            padding: 24px;
             background-color: #444;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             border-radius: 10px;
@@ -35,6 +35,7 @@
             display: block;
             margin: 10px 0 5px;
             font-size: 14px;
+            text-align: left;
         }
         input, select {
             width: 100%;
@@ -44,13 +45,12 @@
             border: 1px solid #ccc;
             background-color: #555;
             color: #fff;
-            box-sizing: border-box;
             font-family: Arial, sans-serif;
             font-size: 14px;
         }
         input::placeholder { color: #aaa; }
         input[type="file"] { padding: 8px; cursor: pointer; }
-        button[type="submit"] {
+        button {
             padding: 12px 20px;
             background-color: #F28544;
             color: #fff;
@@ -61,9 +61,10 @@
             transition: background-color 0.3s ease;
             width: 100%;
             margin-top: 5px;
+            font-family: Arial, sans-serif;
         }
-        button[type="submit"]:hover { background-color: #D46A1E; }
-        button[type="submit"]:disabled { background-color: #888; cursor: not-allowed; }
+        button:hover:not(:disabled) { background-color: #D46A1E; }
+        button:disabled { background-color: #888; cursor: not-allowed; }
         .warning-banner {
             background-color: rgba(242, 133, 68, 0.15);
             border: 1px solid #F28544;
@@ -86,67 +87,306 @@
         .confirm-row input[type="checkbox"] {
             width: auto;
             margin: 0;
-            padding: 0;
             accent-color: #F28544;
         }
+        .results {
+            margin-top: 20px;
+            padding: 14px;
+            background-color: #3B3B3B;
+            border-radius: 6px;
+            text-align: left;
+            font-size: 13px;
+            display: none;
+        }
+        .results.visible { display: block; }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #555;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #F28544;
+            width: 0%;
+            transition: width 0.2s ease;
+        }
+        .stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        .stat { flex: 1; }
+        .stat-label { color: #aaa; font-size: 11px; text-transform: uppercase; }
+        .stat-value { font-size: 18px; font-weight: bold; }
+        .stat.success .stat-value { color: #6BCB77; }
+        .stat.failed .stat-value { color: #FF6B6B; }
+        .log {
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #2B2B2B;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: Menlo, Monaco, monospace;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        .log-row { padding: 2px 0; }
+        .log-row.ok { color: #6BCB77; }
+        .log-row.err { color: #FF6B6B; }
+        .download-btn {
+            margin-top: 10px;
+            background-color: #555;
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+        .download-btn:hover:not(:disabled) { background-color: #666; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Bulk Delete</h1>
-        <form action="/bulkDelete" method="POST" enctype="multipart/form-data">
-            <label for="employee-id">Employee ID</label>
-            <input type="text" id="employee-id" name="employee-id" placeholder="Enter Employee ID" required>
 
-            <label for="region">Region</label>
-            <select id="region" name="region" required>
-                <option value="stagingv2">staging</option>
-                <option value="ap-southeast-2">ap-southeast-2</option>
-                <option value="apac-mumbai">apac-mumbai</option>
-                <option value="us-west-1c">us-west-1c</option>
-                <option value="eu-central-1">eu-central-1</option>
-                <option value="us-east-1">us-east-1</option>
-            </select>
+        <label for="employee-id">Employee ID</label>
+        <input type="text" id="employee-id" placeholder="Enter Employee ID" required>
 
-            <label for="apikey">API Key</label>
-            <input type="text" id="apikey" name="apikey" placeholder="Enter API Key" required>
+        <label for="region">Region</label>
+        <select id="region" required>
+            <option value="stagingv2">Staging</option>
+            <option value="us-east-1">us-east-1</option>
+            <option value="us-west-1c">us-west-1c</option>
+        </select>
 
-            <label for="module">Module</label>
-            <select id="module" name="module" required>
-                <option value="organization">Organization</option>
-                <option value="customers">Customer</option>
-                <option value="property">Property</option>
-                <option value="assets">Asset</option>
-                <option value="product">Parts and Services</option>
-                <option value="jobs">Job</option>
-                <option value="invoice">Invoice</option>
-                <option value="estimate">Quote/Estimate</option>
-                <option value="service_contract">Service Contract</option>
-                <option value="user">User</option>
-                <option value="team">Team</option>
-            </select>
+        <label for="apikey">API Key</label>
+        <input type="password" id="apikey" placeholder="Enter API Key" required>
 
-            <label for="file">Attach CSV / TXT File</label>
-            <input type="file" id="file" name="file" accept=".csv,.txt">
+        <label for="module">Module</label>
+        <select id="module" required>
+            <option value="organization">Organization</option>
+            <option value="customers">Customer</option>
+            <option value="property">Property</option>
+            <option value="assets">Asset</option>
+            <option value="product">Parts and Services</option>
+            <option value="jobs">Job</option>
+            <option value="invoice">Invoice</option>
+            <option value="estimate">Quote/Estimate</option>
+            <option value="service_contract">Service Contract</option>
+            <option value="user">User</option>
+            <option value="team">Team</option>
+        </select>
 
-            <div class="warning-banner">
-                <strong>&#9888; Warning: This action is irreversible.</strong>
-                All records matching the provided UIDs will be permanently deleted.
+        <label for="file">Attach CSV / TXT File (one UID per line)</label>
+        <input type="file" id="file" accept=".csv,.txt" required>
+
+        <div class="warning-banner">
+            <strong>&#9888; Warning: Real deletes are irreversible.</strong>
+            Use <em>Dry run</em> first to verify everything works without deleting anything.
+        </div>
+
+        <div class="confirm-row">
+            <input type="checkbox" id="dryrun-check" checked>
+            <label for="dryrun-check" style="margin:0; cursor:pointer;">
+                <strong>Dry run</strong> &mdash; check records without deleting (safe)
+            </label>
+        </div>
+
+        <div class="confirm-row">
+            <input type="checkbox" id="confirm-check" onchange="toggleSubmit(this)">
+            <label for="confirm-check" style="margin:0; cursor:pointer;">
+                I understand this will permanently delete the selected records (when dry run is off)
+            </label>
+        </div>
+
+        <button type="button" id="submit-btn" disabled onclick="runBulkDelete()">Run</button>
+
+        <div class="results" id="results">
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">Total</div>
+                    <div class="stat-value" id="stat-total">0</div>
+                </div>
+                <div class="stat success">
+                    <div class="stat-label">Deleted</div>
+                    <div class="stat-value" id="stat-success">0</div>
+                </div>
+                <div class="stat failed">
+                    <div class="stat-label">Failed</div>
+                    <div class="stat-value" id="stat-failed">0</div>
+                </div>
             </div>
-
-            <div class="confirm-row">
-                <input type="checkbox" id="confirm-check" name="confirm" onchange="toggleSubmit(this)">
-                <label for="confirm-check" style="margin:0; cursor:pointer;">
-                    I understand this will permanently delete the selected records
-                </label>
-            </div>
-
-            <button type="submit" id="submit-btn" disabled>Bulk Delete</button>
-        </form>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="log" id="log"></div>
+            <button type="button" class="download-btn" id="download-btn" onclick="downloadLog()" style="display:none;">Download Log (CSV)</button>
+        </div>
     </div>
+
     <script>
+        const REGION_URLS = {
+            'stagingv2':  'https://stagingv2.zuperpro.com/api/',
+            'us-east-1':  'https://us-east-1.zuperpro.com/api/',
+            'us-west-1c': 'https://us-west-1c.zuperpro.com/api/'
+        };
+
+        // throttle delay between calls (ms) — prevents 429s
+        const DELAY_MS = 150;
+
+        let logRows = [];
+
         function toggleSubmit(checkbox) {
             document.getElementById('submit-btn').disabled = !checkbox.checked;
+        }
+
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsText(file);
+            });
+        }
+
+        function parseUIDs(text) {
+            return text
+                .split(/\r?\n/)
+                .map(line => line.split(',')[0].trim())  // first column if CSV
+                .filter(line => line && !/^uid$|^id$|^_uid$/i.test(line));  // drop empty + likely headers
+        }
+
+        function appendLog(uid, ok, message) {
+            const log = document.getElementById('log');
+            const row = document.createElement('div');
+            row.className = 'log-row ' + (ok ? 'ok' : 'err');
+            row.textContent = `${ok ? '✓' : '✗'} ${uid} — ${message}`;
+            log.appendChild(row);
+            log.scrollTop = log.scrollHeight;
+            logRows.push({ uid, status: ok ? 'success' : 'failed', message });
+        }
+
+        async function deleteOne(baseUrl, module, uid, apiKey, dryRun) {
+            const url = `${baseUrl}${module}/${encodeURIComponent(uid)}`;
+            const method = dryRun ? 'GET' : 'DELETE';
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: {
+                        'x-api-key': apiKey,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res.ok) return { ok: true, message: dryRun ? `${res.status} found` : `${res.status} OK` };
+                let detail = '';
+                try {
+                    const body = await res.json();
+                    detail = body.message || body.error || JSON.stringify(body).slice(0, 120);
+                } catch {
+                    detail = await res.text().then(t => t.slice(0, 120)).catch(() => '');
+                }
+                return { ok: false, message: `${res.status} ${detail}` };
+            } catch (err) {
+                return { ok: false, message: `Network error: ${err.message}` };
+            }
+        }
+
+        async function runBulkDelete() {
+            const employeeId = document.getElementById('employee-id').value.trim();
+            const region     = document.getElementById('region').value;
+            const apiKey     = document.getElementById('apikey').value.trim();
+            const module     = document.getElementById('module').value;
+            const fileInput  = document.getElementById('file');
+            const submitBtn  = document.getElementById('submit-btn');
+            const dryRun     = document.getElementById('dryrun-check').checked;
+
+            if (!employeeId || !apiKey || !fileInput.files[0]) {
+                alert('Please fill in all fields and select a file.');
+                return;
+            }
+
+            const baseUrl = REGION_URLS[region];
+            if (!baseUrl) {
+                alert('Unknown region.');
+                return;
+            }
+
+            // reset results
+            logRows = [];
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('download-btn').style.display = 'none';
+            document.getElementById('results').classList.add('visible');
+
+            let uids;
+            try {
+                const text = await readFileAsText(fileInput.files[0]);
+                uids = parseUIDs(text);
+            } catch (err) {
+                alert('Could not read file: ' + err.message);
+                return;
+            }
+
+            if (uids.length === 0) {
+                alert('No UIDs found in file.');
+                return;
+            }
+
+            const action = dryRun ? 'Check' : 'Delete';
+            const note   = dryRun ? '\n\nDry run — no records will be deleted.' : '\n\nThis cannot be undone.';
+            if (!confirm(`${action} ${uids.length} ${module} record(s) in ${region}?${note}`)) {
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = dryRun ? 'Checking…' : 'Deleting…';
+
+            // Update stat labels for dry run
+            document.querySelector('.stat.success .stat-label').textContent = dryRun ? 'Found' : 'Deleted';
+            document.querySelector('.stat.failed .stat-label').textContent  = dryRun ? 'Not found' : 'Failed';
+
+            document.getElementById('stat-total').textContent = uids.length;
+            document.getElementById('stat-success').textContent = '0';
+            document.getElementById('stat-failed').textContent = '0';
+
+            let success = 0, failed = 0;
+            for (let i = 0; i < uids.length; i++) {
+                const uid = uids[i];
+                const result = await deleteOne(baseUrl, module, uid, apiKey, dryRun);
+                if (result.ok) {
+                    success++;
+                    document.getElementById('stat-success').textContent = success;
+                } else {
+                    failed++;
+                    document.getElementById('stat-failed').textContent = failed;
+                }
+                appendLog(uid, result.ok, result.message);
+
+                const pct = ((i + 1) / uids.length) * 100;
+                document.getElementById('progress-fill').style.width = pct + '%';
+
+                if (DELAY_MS > 0 && i < uids.length - 1) {
+                    await new Promise(r => setTimeout(r, DELAY_MS));
+                }
+            }
+
+            submitBtn.textContent = 'Run';
+            submitBtn.disabled = false;
+            document.getElementById('confirm-check').checked = false;
+            submitBtn.disabled = true;
+            document.getElementById('download-btn').style.display = 'block';
+        }
+
+        function downloadLog() {
+            const header = 'uid,status,message\n';
+            const csv = header + logRows.map(r =>
+                `"${r.uid.replace(/"/g, '""')}","${r.status}","${(r.message || '').replace(/"/g, '""')}"`
+            ).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bulk-delete-log-${Date.now()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
