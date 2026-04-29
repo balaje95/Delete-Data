@@ -555,6 +555,124 @@
             transition: color 0.15s, border-color 0.15s;
         }
         .settings-clear:hover { color: var(--danger); border-color: rgba(255, 92, 92, 0.3); }
+
+        /* Lookup tool */
+        .lookup-progress {
+            display: none;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: var(--hover-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 12.5px;
+            color: var(--muted);
+            text-align: center;
+        }
+        .lookup-progress.error {
+            color: var(--danger);
+            border-color: rgba(255, 92, 92, 0.25);
+            background: rgba(255, 92, 92, 0.05);
+            text-align: left;
+        }
+        .lookup-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 14px 0 8px;
+            font-size: 12px;
+            color: var(--muted);
+            flex-wrap: wrap;
+        }
+        .lookup-toolbar-counts { display: flex; gap: 14px; }
+        .lookup-toolbar-counts strong { color: var(--text); font-weight: 600; }
+        .lookup-link-btn {
+            background: transparent;
+            border: none;
+            color: var(--orange-light);
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 5px;
+        }
+        .lookup-link-btn:hover { background: var(--orange-dim); }
+        .lookup-table-wrap {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            max-height: 320px;
+            overflow: auto;
+            background: var(--log-bg);
+        }
+        .lookup-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+        .lookup-table-wrap::-webkit-scrollbar-track { background: transparent; }
+        .lookup-table-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+        table.lookup-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .lookup-table thead th {
+            position: sticky;
+            top: 0;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 9px 10px;
+            text-align: left;
+            font-size: 10.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            z-index: 1;
+        }
+        .lookup-table tbody td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            vertical-align: top;
+        }
+        .lookup-table tbody tr:last-child td { border-bottom: none; }
+        .lookup-table tbody tr:hover { background: var(--hover-bg); }
+        .lookup-table .uid-cell {
+            font-family: 'JetBrains Mono', 'Menlo', monospace;
+            font-size: 10.5px;
+            color: var(--muted);
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .lookup-table input[type="checkbox"] {
+            width: 14px; height: 14px;
+            margin: 0;
+            accent-color: var(--orange);
+            cursor: pointer;
+        }
+        .lookup-table .empty-row td {
+            padding: 16px;
+            color: var(--danger);
+            font-family: 'JetBrains Mono', 'Menlo', monospace;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        .primary-action-btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 9px 14px;
+            background: var(--orange-dim);
+            border: 1px solid rgba(232, 98, 42, 0.4);
+            border-radius: 8px;
+            color: var(--orange-light);
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .primary-action-btn:hover:not(:disabled) { background: rgba(232, 98, 42, 0.2); }
+        .primary-action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -628,8 +746,87 @@
         </div>
     </div>
 
-    <!-- Main card -->
+    <!-- Lookup card -->
     <div class="card">
+        <div class="card-header collapsible" id="lookup-header" onclick="toggleLookupCard()">
+            <div class="card-header-icon">
+                <svg viewBox="0 0 20 20" fill="none">
+                    <circle cx="9" cy="9" r="5" stroke="#E8622A" stroke-width="1.5"/>
+                    <path d="M13 13l4 4" stroke="#E8622A" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="card-header-grow">
+                <h2>Lookup UIDs</h2>
+                <p>Find UIDs by PO number, title, vendor — for Purchase &amp; Material Orders</p>
+            </div>
+            <span class="chev">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+        </div>
+        <div class="card-body collapsed" id="lookup-body">
+            <div class="form-grid">
+                <div class="form-group span2">
+                    <label for="lookup-module">Module</label>
+                    <div class="select-wrap">
+                        <select id="lookup-module">
+                            <option value="purchase_order">Purchase Order</option>
+                            <option value="material_requests">Material Orders</option>
+                        </select>
+                    </div>
+                    <div class="helper-text">Uses Region &amp; API Key from the Bulk Delete form below.</div>
+                </div>
+
+                <div class="form-group span2">
+                    <label for="lookup-search">Filter (optional)</label>
+                    <input type="text" id="lookup-search" placeholder="Search by PO no, title, vendor…" oninput="renderLookupTable()">
+                </div>
+            </div>
+
+            <button type="button" class="run-btn" onclick="fetchLookupRecords()" id="lookup-fetch-btn">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="3.5" stroke="white" stroke-width="1.4"/><path d="M9 9l4 4" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+                Fetch records
+            </button>
+
+            <div class="lookup-progress" id="lookup-progress"></div>
+
+            <div id="lookup-results-wrap" style="display:none;">
+                <div class="lookup-toolbar">
+                    <div class="lookup-toolbar-counts">
+                        <span><strong id="lookup-count">0</strong> shown</span>
+                        <span><strong id="lookup-selected-count">0</strong> selected</span>
+                    </div>
+                    <button type="button" class="lookup-link-btn" onclick="toggleAllLookup()">Toggle all visible</button>
+                </div>
+                <div class="lookup-table-wrap">
+                    <table class="lookup-table">
+                        <thead>
+                            <tr>
+                                <th style="width:30px;"></th>
+                                <th>PO / MO No</th>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>UID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lookup-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="result-actions">
+                    <button type="button" class="action-btn" onclick="downloadLookupCsv()">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6.5l3 3 3-3M1.5 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Download all as CSV
+                    </button>
+                    <button type="button" class="primary-action-btn" id="lookup-send-btn" onclick="sendLookupToBulkDelete()" disabled>
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Send 0 selected to Bulk Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main card -->
+    <div class="card" id="bulk-delete-card">
         <div class="card-header">
             <div class="card-header-icon">
                 <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1402,6 +1599,278 @@
                 card.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         }
+    });
+
+    /* === Lookup tool === */
+    let lookupRecords = [];
+    let lookupSelected = new Set();
+
+    const LOOKUP_FIELDS = {
+        purchase_order: {
+            identifier: ['purchase_order_number', 'po_number', 'po_no', 'number'],
+            title: ['purchase_order_title', 'po_title', 'title', 'subject', 'description'],
+            status: ['purchase_order_status', 'po_status', 'status'],
+            uid: ['purchase_order_uid', 'po_uid', 'uid', '_id', 'id']
+        },
+        material_requests: {
+            identifier: ['material_request_number', 'request_number', 'mr_number', 'mo_number', 'number'],
+            title: ['material_request_title', 'mr_title', 'title', 'subject', 'description'],
+            status: ['material_request_status', 'mr_status', 'request_status', 'status'],
+            uid: ['material_request_uid', 'mr_uid', 'uid', '_id', 'id']
+        }
+    };
+
+    function toggleLookupCard() {
+        const header = document.getElementById('lookup-header');
+        const body = document.getElementById('lookup-body');
+        header.classList.toggle('open');
+        body.classList.toggle('collapsed');
+    }
+
+    function setLookupProgress(text, isError) {
+        const el = document.getElementById('lookup-progress');
+        if (!text) { el.style.display = 'none'; el.classList.remove('error'); return; }
+        el.textContent = text;
+        el.style.display = 'block';
+        el.classList.toggle('error', !!isError);
+    }
+
+    function findField(record, candidates) {
+        for (const k of candidates) {
+            if (record[k] != null && record[k] !== '') return { field: k, value: record[k] };
+        }
+        return null;
+    }
+
+    function findFieldValueStr(record, candidates) {
+        const found = findField(record, candidates);
+        return found ? String(found.value) : '';
+    }
+
+    async function fetchLookupRecords() {
+        const region = document.getElementById('region').value;
+        const apiKey = document.getElementById('apikey').value.trim();
+        const moduleVal = document.getElementById('lookup-module').value;
+
+        if (!apiKey) { alert('Enter the API Key in the Bulk Delete form below first.'); return; }
+        const baseUrl = REGION_URLS[region];
+        if (!baseUrl) { alert('Unknown region.'); return; }
+
+        const btn = document.getElementById('lookup-fetch-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="5.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M7.5 2a5.5 5.5 0 015.5 5.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg> Fetching…';
+
+        lookupRecords = [];
+        lookupSelected = new Set();
+        document.getElementById('lookup-results-wrap').style.display = 'none';
+        setLookupProgress('Fetching page 1…', false);
+
+        try {
+            let page = 1;
+            const limit = 100;
+            const maxPages = 50;
+
+            while (page <= maxPages) {
+                // Try Zuper's typical paginated list pattern
+                const url = `${baseUrl}${moduleVal}?page=${page}&count=${limit}`;
+                const res = await fetch(url, { headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } });
+
+                if (!res.ok) {
+                    const body = await res.text().then(t => t.slice(0, 300)).catch(() => '');
+                    throw new Error(`${res.status} ${res.statusText} — ${body}`);
+                }
+
+                const data = await res.json();
+                // Try several common shapes
+                const records = Array.isArray(data) ? data
+                    : (Array.isArray(data.data) ? data.data
+                    : (Array.isArray(data.results) ? data.results
+                    : (Array.isArray(data.records) ? data.records : [])));
+
+                if (records.length === 0) break;
+                lookupRecords.push(...records);
+                setLookupProgress(`Fetched ${lookupRecords.length} record(s) so far…`, false);
+
+                if (records.length < limit) break;
+                page++;
+            }
+
+            if (lookupRecords.length === 0) {
+                setLookupProgress('No records returned. Either the account has no records of this type, or the API response shape differs from expected.', false);
+                return;
+            }
+
+            // Verify we can find a UID field
+            const fields = LOOKUP_FIELDS[moduleVal];
+            const uidCandidate = findField(lookupRecords[0], fields.uid);
+            if (!uidCandidate) {
+                const keys = Object.keys(lookupRecords[0]).join(', ');
+                setLookupProgress(`Auto-detect failed — couldn't find a UID field. The first record's keys are: ${keys}\n\nShare these with the developer to add support.`, true);
+                return;
+            }
+
+            setLookupProgress(`Fetched ${lookupRecords.length} ${moduleVal === 'purchase_order' ? 'purchase order' : 'material order'}(s). UID field detected: "${uidCandidate.field}".`, false);
+            renderLookupTable();
+            document.getElementById('lookup-results-wrap').style.display = 'block';
+        } catch (err) {
+            setLookupProgress('Error: ' + err.message, true);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="3.5" stroke="white" stroke-width="1.4"/><path d="M9 9l4 4" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg> Fetch records';
+        }
+    }
+
+    function renderLookupTable() {
+        const tbody = document.getElementById('lookup-tbody');
+        const moduleVal = document.getElementById('lookup-module').value;
+        const fields = LOOKUP_FIELDS[moduleVal] || LOOKUP_FIELDS.purchase_order;
+        const filter = document.getElementById('lookup-search').value.trim().toLowerCase();
+
+        if (lookupRecords.length === 0) {
+            tbody.innerHTML = '';
+            document.getElementById('lookup-count').textContent = '0';
+            return;
+        }
+
+        const uidField = findField(lookupRecords[0], fields.uid);
+        if (!uidField) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Could not detect UID field — see message above.</td></tr>';
+            return;
+        }
+
+        let visible = lookupRecords;
+        if (filter) {
+            visible = lookupRecords.filter(r => {
+                const idVal = findFieldValueStr(r, fields.identifier).toLowerCase();
+                const titleVal = findFieldValueStr(r, fields.title).toLowerCase();
+                // Also search vendor name if present
+                const vendorVal = (r.vendor_name || (r.vendor && r.vendor.name) || '').toString().toLowerCase();
+                return idVal.includes(filter) || titleVal.includes(filter) || vendorVal.includes(filter);
+            });
+        }
+
+        if (visible.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:14px; color:var(--muted); text-align:center;">No matches.</td></tr>';
+            document.getElementById('lookup-count').textContent = '0';
+            updateLookupSelectedCount();
+            return;
+        }
+
+        tbody.innerHTML = visible.map(r => {
+            const uid = r[uidField.field];
+            const id = findFieldValueStr(r, fields.identifier) || '—';
+            const title = findFieldValueStr(r, fields.title) || '—';
+            const status = findFieldValueStr(r, fields.status) || '—';
+            const checked = lookupSelected.has(uid) ? 'checked' : '';
+            const titleTrim = title.length > 60 ? title.slice(0, 57) + '…' : title;
+            return `<tr>
+                <td><input type="checkbox" data-uid="${escapeHtml(String(uid))}" ${checked} onchange="onLookupRowToggle(this)"></td>
+                <td>${escapeHtml(String(id))}</td>
+                <td title="${escapeHtml(title)}">${escapeHtml(titleTrim)}</td>
+                <td>${escapeHtml(String(status))}</td>
+                <td class="uid-cell" title="${escapeHtml(String(uid))}">${escapeHtml(String(uid))}</td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('lookup-count').textContent = `${visible.length}${visible.length !== lookupRecords.length ? ' / ' + lookupRecords.length : ''}`;
+        updateLookupSelectedCount();
+    }
+
+    function onLookupRowToggle(checkbox) {
+        const uid = checkbox.getAttribute('data-uid');
+        if (checkbox.checked) lookupSelected.add(uid);
+        else lookupSelected.delete(uid);
+        updateLookupSelectedCount();
+    }
+
+    function updateLookupSelectedCount() {
+        const n = lookupSelected.size;
+        document.getElementById('lookup-selected-count').textContent = n;
+        const btn = document.getElementById('lookup-send-btn');
+        btn.disabled = n === 0;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Send ${n} selected to Bulk Delete`;
+    }
+
+    function toggleAllLookup() {
+        const checkboxes = document.querySelectorAll('#lookup-tbody input[type="checkbox"]');
+        if (checkboxes.length === 0) return;
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+            const uid = cb.getAttribute('data-uid');
+            if (cb.checked) lookupSelected.add(uid);
+            else lookupSelected.delete(uid);
+        });
+        updateLookupSelectedCount();
+    }
+
+    function sendLookupToBulkDelete() {
+        if (lookupSelected.size === 0) return;
+        const moduleVal = document.getElementById('lookup-module').value;
+
+        // Populate bulk delete state from the lookup selection
+        currentUids = Array.from(lookupSelected);
+        parsedRows = null;
+        detectedHeaders = null;
+
+        // Set the matching module in the bulk delete dropdown
+        document.getElementById('module').value = moduleVal;
+        saveSettings();
+
+        // Update file UI to reflect lookup-sourced UIDs
+        const moduleLabel = moduleVal === 'purchase_order' ? 'Purchase Orders' : 'Material Orders';
+        document.getElementById('file-label-text').innerHTML = `<span>From Lookup: ${currentUids.length} ${moduleLabel}</span>`;
+        document.getElementById('file').value = '';
+        document.getElementById('column-section').style.display = 'none';
+        setFileInfo(`✓ ${currentUids.length} UID${currentUids.length === 1 ? '' : 's'} loaded from Lookup tool.`, 'ok');
+        renderPreview(currentUids);
+
+        // Smooth scroll to bulk delete card
+        document.getElementById('bulk-delete-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function downloadLookupCsv() {
+        if (lookupRecords.length === 0) return;
+        const moduleVal = document.getElementById('lookup-module').value;
+        const fields = LOOKUP_FIELDS[moduleVal] || LOOKUP_FIELDS.purchase_order;
+        const uidField = findField(lookupRecords[0], fields.uid);
+        if (!uidField) { alert('Could not detect UID field.'); return; }
+
+        // Order: UID first, then identifier/title/status, then everything else alphabetically
+        const allKeys = new Set();
+        lookupRecords.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
+        const priorityKeys = [
+            uidField.field,
+            ...fields.identifier.filter(k => allKeys.has(k)),
+            ...fields.title.filter(k => allKeys.has(k)),
+            ...fields.status.filter(k => allKeys.has(k))
+        ];
+        const seen = new Set(priorityKeys);
+        const restKeys = Array.from(allKeys).filter(k => !seen.has(k)).sort();
+        const orderedKeys = [...priorityKeys, ...restKeys];
+
+        const escapeCell = v => {
+            if (v == null) return '';
+            if (typeof v === 'object') v = JSON.stringify(v);
+            const s = String(v).replace(/"/g, '""');
+            return /[",\n\r]/.test(s) ? `"${s}"` : s;
+        };
+
+        const csv = [
+            orderedKeys.join(','),
+            ...lookupRecords.map(r => orderedKeys.map(k => escapeCell(r[k])).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${moduleVal}-lookup-${Date.now()}.csv`; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    /* Re-render lookup table when module switches (in case data was already loaded) */
+    document.getElementById('lookup-module').addEventListener('change', () => {
+        if (lookupRecords.length > 0) renderLookupTable();
     });
 
     loadSettings();
