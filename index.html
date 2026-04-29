@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,12 +18,39 @@
             --surface:      #1E1E1E;
             --card:         #272727;
             --border:       rgba(255,255,255,0.08);
+            --border-strong: rgba(255,255,255,0.15);
             --border-focus: rgba(232, 98, 42, 0.5);
             --text:         #F0F0F0;
             --muted:        #9A9A9A;
+            --placeholder:  #555;
+            --hover-bg:     rgba(255,255,255,0.05);
+            --hover-bg-strong: rgba(255,255,255,0.09);
+            --log-bg:       #161616;
             --success:      #4EC876;
             --danger:       #FF5C5C;
+            --warning:      #F2C744;
             --radius:       10px;
+        }
+
+        [data-theme="light"] {
+            --orange:       #E8622A;
+            --orange-light: #D4541F;
+            --orange-dim:   rgba(232, 98, 42, 0.10);
+            --charcoal:     #E5E5E5;
+            --surface:      #F4F4F4;
+            --card:         #FFFFFF;
+            --border:       rgba(0,0,0,0.08);
+            --border-strong: rgba(0,0,0,0.18);
+            --border-focus: rgba(232, 98, 42, 0.55);
+            --text:         #1A1A1A;
+            --muted:        #6B6B6B;
+            --placeholder:  #B5B5B5;
+            --hover-bg:     rgba(0,0,0,0.04);
+            --hover-bg-strong: rgba(0,0,0,0.07);
+            --log-bg:       #F8F8F8;
+            --success:      #2D9F47;
+            --danger:       #D62828;
+            --warning:      #B8651D;
         }
 
         html, body {
@@ -31,6 +58,7 @@
             font-family: 'Inter', sans-serif;
             background: var(--surface);
             color: var(--text);
+            transition: background 0.2s, color 0.2s;
         }
 
         body {
@@ -52,16 +80,36 @@
 
         header img { height: 36px; }
 
+        .header-right { display: flex; align-items: center; gap: 10px; }
+
         .header-badge {
             font-size: 11px;
             font-weight: 600;
             letter-spacing: 0.08em;
             text-transform: uppercase;
             color: var(--muted);
-            background: rgba(255,255,255,0.06);
+            background: var(--hover-bg);
             border: 1px solid var(--border);
             border-radius: 20px;
             padding: 4px 12px;
+        }
+
+        .icon-btn {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: var(--hover-bg);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, color 0.15s;
+            padding: 0;
+        }
+        .icon-btn:hover { background: var(--hover-bg-strong); color: var(--text); }
+
+        /* Light theme: invert logo so it's visible on light background */
+        [data-theme="light"] header img {
+            filter: invert(1) hue-rotate(180deg);
         }
 
         /* ── Card ── */
@@ -74,6 +122,8 @@
             overflow: hidden;
         }
 
+        .card + .card { margin-top: 14px; }
+
         .card-header {
             padding: 22px 28px 18px;
             border-bottom: 1px solid var(--border);
@@ -81,6 +131,15 @@
             align-items: center;
             gap: 12px;
         }
+
+        .card-header.collapsible {
+            cursor: pointer;
+            user-select: none;
+            padding-bottom: 22px;
+        }
+        .card-header.collapsible:hover { background: var(--hover-bg); }
+        .card-header.collapsible.open { border-bottom: 1px solid var(--border); padding-bottom: 18px; }
+        .card-header.collapsible:not(.open) { border-bottom: none; }
 
         .card-header-icon {
             width: 36px;
@@ -95,11 +154,12 @@
 
         .card-header-icon svg { width: 18px; height: 18px; }
 
-        .card-header h1 {
+        .card-header h1, .card-header h2 {
             font-size: 17px;
             font-weight: 600;
             color: var(--text);
         }
+        .card-header h2 { font-size: 14px; }
 
         .card-header p {
             font-size: 12px;
@@ -107,7 +167,16 @@
             margin-top: 2px;
         }
 
+        .card-header-grow { flex: 1; }
+        .chev {
+            transition: transform 0.2s;
+            color: var(--muted);
+            display: flex;
+        }
+        .card-header.collapsible.open .chev { transform: rotate(180deg); }
+
         .card-body { padding: 24px 28px; }
+        .card-body.collapsed { display: none; }
 
         /* ── Form grid ── */
         .form-grid {
@@ -143,7 +212,7 @@
         }
 
         input:focus, select:focus { border-color: var(--border-focus); }
-        input::placeholder { color: #555; }
+        input::placeholder { color: var(--placeholder); }
         input[type="password"] { letter-spacing: 0.1em; }
         input[type="password"]::placeholder { letter-spacing: 0; }
 
@@ -161,6 +230,12 @@
             pointer-events: none;
         }
 
+        .helper-text {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: -2px;
+        }
+
         /* File input */
         .file-label {
             display: flex;
@@ -168,7 +243,7 @@
             gap: 10px;
             padding: 10px 13px;
             background: var(--surface);
-            border: 1px dashed rgba(255,255,255,0.15);
+            border: 1px dashed var(--border-strong);
             border-radius: 8px;
             cursor: pointer;
             transition: border-color 0.15s;
@@ -178,6 +253,40 @@
         .file-label-text { font-size: 13px; color: var(--muted); }
         .file-label-text span { color: var(--orange-light); font-weight: 500; }
         input[type="file"] { display: none; }
+
+        .file-info {
+            font-size: 12px;
+            margin-top: 2px;
+            min-height: 16px;
+        }
+        .file-info.ok { color: var(--success); }
+        .file-info.warn { color: var(--warning); }
+        .file-info.err { color: var(--danger); }
+
+        /* Preview panel */
+        .preview-panel {
+            display: none;
+            margin-top: 8px;
+            background: var(--log-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            max-height: 140px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        .preview-panel.visible { display: block; }
+        .preview-panel::-webkit-scrollbar { width: 4px; }
+        .preview-panel::-webkit-scrollbar-track { background: transparent; }
+        .preview-panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+        .preview-row { padding: 1px 0; color: var(--text); }
+        .preview-row .num {
+            color: var(--muted);
+            display: inline-block;
+            width: 32px;
+        }
 
         /* Divider */
         .divider {
@@ -196,9 +305,14 @@
             border-radius: 8px;
             margin-bottom: 18px;
         }
+        [data-theme="light"] .warning {
+            background: rgba(214, 40, 40, 0.06);
+            border-color: rgba(214, 40, 40, 0.25);
+        }
         .warning svg { flex-shrink: 0; margin-top: 1px; }
         .warning-body { font-size: 12.5px; color: #FF9090; line-height: 1.5; }
-        .warning-body strong { display: block; color: #FF6B6B; font-weight: 600; margin-bottom: 2px; }
+        [data-theme="light"] .warning-body { color: #C0392B; }
+        .warning-body strong { display: block; color: var(--danger); font-weight: 600; margin-bottom: 2px; }
 
         /* Toggles */
         .toggle-row {
@@ -232,7 +346,7 @@
             width: 18px;
             height: 18px;
             border-radius: 5px;
-            border: 1.5px solid rgba(255,255,255,0.2);
+            border: 1.5px solid var(--border-strong);
             background: var(--surface);
             display: flex;
             align-items: center;
@@ -264,6 +378,8 @@
         }
         .pill.safe { background: rgba(78, 200, 118, 0.12); color: var(--success); }
         .pill.danger { background: rgba(255, 92, 92, 0.12); color: var(--danger); }
+        [data-theme="light"] .pill.safe { background: rgba(45, 159, 71, 0.12); }
+        [data-theme="light"] .pill.danger { background: rgba(214, 40, 40, 0.10); }
 
         /* Run button */
         .run-btn {
@@ -286,6 +402,38 @@
         }
         .run-btn:hover:not(:disabled) { background: #D4541F; }
         .run-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* Run controls (pause/cancel) */
+        .run-controls {
+            display: none;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .run-controls.visible { display: flex; }
+
+        .pause-btn, .cancel-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: background 0.15s;
+        }
+        .pause-btn {
+            background: var(--hover-bg);
+            color: var(--text);
+        }
+        .pause-btn:hover:not(:disabled) { background: var(--hover-bg-strong); }
+        .cancel-btn {
+            background: rgba(255, 92, 92, 0.08);
+            color: var(--danger);
+            border-color: rgba(255, 92, 92, 0.25);
+        }
+        .cancel-btn:hover:not(:disabled) { background: rgba(255, 92, 92, 0.15); }
 
         /* ── Results Panel ── */
         .results {
@@ -317,6 +465,7 @@
         .stat-value { font-size: 22px; font-weight: 700; }
         .stat.success .stat-value { color: var(--success); }
         .stat.failed  .stat-value { color: var(--danger); }
+        .stat.warning .stat-value { color: var(--warning); }
 
         .progress-bar {
             width: 100%;
@@ -337,7 +486,7 @@
         .log {
             max-height: 200px;
             overflow-y: auto;
-            background: #161616;
+            background: var(--log-bg);
             border: 1px solid var(--border);
             padding: 10px 12px;
             border-radius: 8px;
@@ -347,17 +496,19 @@
         }
         .log::-webkit-scrollbar { width: 4px; }
         .log::-webkit-scrollbar-track { background: transparent; }
-        .log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .log::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
         .log-row { padding: 1px 0; }
-        .log-row.ok  { color: var(--success); }
-        .log-row.err { color: var(--danger); }
+        .log-row.ok   { color: var(--success); }
+        .log-row.err  { color: var(--danger); }
+        .log-row.warn { color: var(--warning); }
 
-        .result-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .result-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 
         .action-btn {
             flex: 1;
+            min-width: 130px;
             padding: 9px 14px;
-            background: rgba(255,255,255,0.05);
+            background: var(--hover-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
             color: var(--text);
@@ -368,11 +519,12 @@
             transition: background 0.15s;
             display: flex; align-items: center; justify-content: center; gap: 6px;
         }
-        .action-btn:hover:not(:disabled) { background: rgba(255,255,255,0.09); }
+        .action-btn:hover:not(:disabled) { background: var(--hover-bg-strong); }
         .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
         .proceed-btn {
             flex: 1;
+            min-width: 180px;
             padding: 9px 14px;
             background: rgba(255, 92, 92, 0.1);
             border: 1px solid rgba(255, 92, 92, 0.3);
@@ -387,15 +539,96 @@
         }
         .proceed-btn:hover:not(:disabled) { background: rgba(255, 92, 92, 0.18); }
         .proceed-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* Settings clear button — secondary danger */
+        .settings-clear {
+            margin-top: 14px;
+            padding: 9px 14px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            cursor: pointer;
+            width: 100%;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .settings-clear:hover { color: var(--danger); border-color: rgba(255, 92, 92, 0.3); }
     </style>
 </head>
 <body>
 
     <header>
         <img src="Zuper-Horizontal-Logo.png" alt="Zuper">
-        <span class="header-badge">Internal Tool</span>
+        <div class="header-right">
+            <span class="header-badge">Internal Tool</span>
+            <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+                <svg id="theme-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M14 9.5A6 6 0 016.5 2 6 6 0 1014 9.5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
     </header>
 
+    <!-- Settings card -->
+    <div class="card">
+        <div class="card-header collapsible" id="settings-header" onclick="toggleSettings()">
+            <div class="card-header-icon">
+                <svg viewBox="0 0 20 20" fill="none">
+                    <path d="M10 13a3 3 0 100-6 3 3 0 000 6z" stroke="#E8622A" stroke-width="1.5"/>
+                    <path d="M16.2 12a1.4 1.4 0 00.28 1.54l.05.05a1.7 1.7 0 11-2.4 2.4l-.05-.05a1.4 1.4 0 00-1.54-.28 1.4 1.4 0 00-.85 1.28V17a1.7 1.7 0 11-3.4 0v-.07a1.4 1.4 0 00-.92-1.28 1.4 1.4 0 00-1.54.28l-.05.05a1.7 1.7 0 11-2.4-2.4l.05-.05a1.4 1.4 0 00.28-1.54 1.4 1.4 0 00-1.28-.85H3a1.7 1.7 0 110-3.4h.07a1.4 1.4 0 001.28-.92 1.4 1.4 0 00-.28-1.54l-.05-.05a1.7 1.7 0 112.4-2.4l.05.05a1.4 1.4 0 001.54.28h.07A1.4 1.4 0 009 2.07V2a1.7 1.7 0 113.4 0v.07a1.4 1.4 0 00.85 1.28 1.4 1.4 0 001.54-.28l.05-.05a1.7 1.7 0 112.4 2.4l-.05.05a1.4 1.4 0 00-.28 1.54v.07a1.4 1.4 0 001.28.85H17a1.7 1.7 0 110 3.4h-.07a1.4 1.4 0 00-1.28.85z" stroke="#E8622A" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="card-header-grow">
+                <h2>Settings</h2>
+                <p>Slack audit, concurrency, saved values</p>
+            </div>
+            <span class="chev">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+        </div>
+        <div class="card-body collapsed" id="settings-body">
+            <div class="form-grid">
+                <div class="form-group span2">
+                    <label for="webhook-url">Slack Webhook URL</label>
+                    <input type="text" id="webhook-url" placeholder="https://hooks.slack.com/services/…">
+                    <div class="helper-text">Audit summary of each run posted to this channel. Optional.</div>
+                </div>
+
+                <div class="form-group span2">
+                    <label for="concurrency">Concurrency</label>
+                    <div class="select-wrap">
+                        <select id="concurrency">
+                            <option value="1">1 — sequential (safest)</option>
+                            <option value="3" selected>3 — recommended</option>
+                            <option value="5">5</option>
+                            <option value="10">10 — fastest, may rate-limit</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group span2">
+                    <div class="toggle-row" style="margin-bottom:0;">
+                        <div class="cb-wrap">
+                            <input type="checkbox" id="remember-key">
+                            <div class="cb-box">
+                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                        </div>
+                        <div class="toggle-text">
+                            <strong>Remember API key</strong><br>
+                            <em>Saves locally in this browser only. Uncheck on shared machines.</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="settings-clear" onclick="clearSavedSettings()">Clear all saved settings</button>
+        </div>
+    </div>
+
+    <!-- Main card -->
     <div class="card">
         <div class="card-header">
             <div class="card-header-icon">
@@ -460,7 +693,20 @@
                         </span>
                         <span class="file-label-text" id="file-label-text"><span>Choose file</span> or drag & drop — .csv, .txt, .xlsx</span>
                     </label>
-                    <input type="file" id="file" accept=".csv,.txt,.xlsx,.xls" required onchange="updateFileLabel(this)">
+                    <input type="file" id="file" accept=".csv,.txt,.xlsx,.xls" required>
+                    <div class="file-info" id="file-info"></div>
+                </div>
+
+                <div class="form-group span2" id="column-section" style="display:none;">
+                    <label for="column-select">UID Column</label>
+                    <div class="select-wrap">
+                        <select id="column-select"></select>
+                    </div>
+                </div>
+
+                <div class="form-group span2" style="display:none;" id="preview-wrap">
+                    <label>Preview</label>
+                    <div class="preview-panel" id="preview-panel"></div>
                 </div>
 
             </div>
@@ -469,8 +715,8 @@
 
             <div class="warning">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-top:1px">
-                    <path d="M8 1.5L1 13.5h14L8 1.5z" stroke="#FF6B6B" stroke-width="1.2" stroke-linejoin="round"/>
-                    <path d="M8 6v4M8 11.5v.5" stroke="#FF6B6B" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M8 1.5L1 13.5h14L8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+                    <path d="M8 6v4M8 11.5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                 </svg>
                 <div class="warning-body">
                     <strong>Real deletes are irreversible.</strong>
@@ -494,6 +740,19 @@
 
             <div class="toggle-row">
                 <div class="cb-wrap">
+                    <input type="checkbox" id="preflight-check">
+                    <div class="cb-box">
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                </div>
+                <div class="toggle-text">
+                    <strong>Pre-flight check</strong><br>
+                    <em>Skip records that have dependent data. Per-module checks are placeholder until configured.</em>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="cb-wrap">
                     <input type="checkbox" id="confirm-check" onchange="toggleSubmit(this)">
                     <div class="cb-box">
                         <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -509,6 +768,17 @@
                 Run
             </button>
 
+            <div class="run-controls" id="run-controls">
+                <button type="button" class="pause-btn" id="pause-btn" onclick="togglePause()">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="3" y="2" width="2" height="8" fill="currentColor"/><rect x="7" y="2" width="2" height="8" fill="currentColor"/></svg>
+                    Pause
+                </button>
+                <button type="button" class="cancel-btn" onclick="cancelRun()">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    Cancel
+                </button>
+            </div>
+
             <div class="results" id="results">
                 <div class="stats">
                     <div class="stat">
@@ -523,6 +793,10 @@
                         <div class="stat-label" id="lbl-failed">Not Found</div>
                         <div class="stat-value" id="stat-failed">0</div>
                     </div>
+                    <div class="stat warning" id="stat-warning-col" style="display:none;">
+                        <div class="stat-label">Warnings</div>
+                        <div class="stat-value" id="stat-warning">0</div>
+                    </div>
                 </div>
 
                 <div class="progress-bar">
@@ -536,6 +810,10 @@
                         <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         Proceed with delete
                     </button>
+                    <button type="button" class="action-btn" id="retry-btn" onclick="retryFailed()" style="display:none;">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5a4.5 4.5 0 108-2.83M10 1.5v3h-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Retry failed
+                    </button>
                     <button type="button" class="action-btn" id="download-btn" onclick="downloadLog()" style="display:none;">
                         <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6.5l3 3 3-3M1.5 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         Download Log
@@ -546,202 +824,584 @@
     </div>
 
     <script>
-        const REGION_URLS = {
-            'stagingv2':  'https://stagingv2.zuperpro.com/api/',
-            'us-east-1':  'https://us-east-1.zuperpro.com/api/',
-            'us-west-1c': 'https://us-west-1c.zuperpro.com/api/'
-        };
-        const DELAY_MS = 150;
-        let logRows = [];
-        let dryRunContext = null;
+    /* === Region & endpoints === */
+    const REGION_URLS = {
+        'stagingv2':  'https://stagingv2.zuperpro.com/api/',
+        'us-east-1':  'https://us-east-1.zuperpro.com/api/',
+        'us-west-1c': 'https://us-west-1c.zuperpro.com/api/'
+    };
 
-        function updateFileLabel(input) {
-            const labelText = document.getElementById('file-label-text');
-            if (input.files && input.files[0]) {
-                labelText.innerHTML = '<span>' + input.files[0].name + '</span>';
-            } else {
-                labelText.innerHTML = '<span>Choose file</span> or drag & drop — .csv, .txt, .xlsx';
-            }
+    /* === Dependency check framework — placeholders ===
+     *
+     * Each entry receives (uid, baseUrl, apiKey) and must return:
+     *   { hasDependents: boolean, count: number, type: string }
+     *
+     * Drop in real implementations as you verify endpoints. While `null`,
+     * pre-flight is treated as not-configured for that module.
+     *
+     * Example for customers:
+     *   customers: async (uid, baseUrl, apiKey) => {
+     *     const res = await fetch(`${baseUrl}jobs?customer_uid=${encodeURIComponent(uid)}&count_only=true`, {
+     *       headers: { 'x-api-key': apiKey }
+     *     });
+     *     const data = await res.json();
+     *     const count = data?.data?.count || 0;
+     *     return { hasDependents: count > 0, count, type: 'jobs' };
+     *   }
+     */
+    const DEPENDENCY_CHECKS = {
+        organization:     null,
+        customers:        null,
+        property:         null,
+        assets:           null,
+        product:          null,
+        jobs:             null,
+        invoice:          null,
+        estimate:         null,
+        service_contract: null,
+        user:             null,
+        team:             null
+    };
+
+    /* === Persistence === */
+    const STORAGE_KEYS = {
+        region: 'bd_region', module: 'bd_module',
+        employeeId: 'bd_employee_id', rememberKey: 'bd_remember_key',
+        apiKey: 'bd_api_key', webhook: 'bd_webhook',
+        concurrency: 'bd_concurrency', theme: 'bd_theme'
+    };
+
+    function safeGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+    function safeSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
+    function safeDel(k) { try { localStorage.removeItem(k); } catch {} }
+
+    function loadSettings() {
+        const region = safeGet(STORAGE_KEYS.region);
+        if (region) document.getElementById('region').value = region;
+        const moduleVal = safeGet(STORAGE_KEYS.module);
+        if (moduleVal) document.getElementById('module').value = moduleVal;
+        const empId = safeGet(STORAGE_KEYS.employeeId);
+        if (empId) document.getElementById('employee-id').value = empId;
+        const remember = safeGet(STORAGE_KEYS.rememberKey) === 'true';
+        document.getElementById('remember-key').checked = remember;
+        if (remember) {
+            const key = safeGet(STORAGE_KEYS.apiKey);
+            if (key) document.getElementById('apikey').value = key;
         }
+        const webhook = safeGet(STORAGE_KEYS.webhook);
+        if (webhook) document.getElementById('webhook-url').value = webhook;
+        const concurrency = safeGet(STORAGE_KEYS.concurrency);
+        if (concurrency) document.getElementById('concurrency').value = concurrency;
+        const theme = safeGet(STORAGE_KEYS.theme) || 'dark';
+        applyTheme(theme);
+    }
 
-        function toggleSubmit(checkbox) {
-            document.getElementById('submit-btn').disabled = !checkbox.checked;
+    function saveSettings() {
+        safeSet(STORAGE_KEYS.region, document.getElementById('region').value);
+        safeSet(STORAGE_KEYS.module, document.getElementById('module').value);
+        safeSet(STORAGE_KEYS.employeeId, document.getElementById('employee-id').value);
+        const remember = document.getElementById('remember-key').checked;
+        safeSet(STORAGE_KEYS.rememberKey, remember);
+        if (remember) safeSet(STORAGE_KEYS.apiKey, document.getElementById('apikey').value);
+        else safeDel(STORAGE_KEYS.apiKey);
+        safeSet(STORAGE_KEYS.webhook, document.getElementById('webhook-url').value);
+        safeSet(STORAGE_KEYS.concurrency, document.getElementById('concurrency').value);
+    }
+
+    function clearSavedSettings() {
+        if (!confirm("Clear all saved settings? You'll need to re-enter everything next time.")) return;
+        Object.values(STORAGE_KEYS).forEach(k => safeDel(k));
+        document.getElementById('apikey').value = '';
+        document.getElementById('webhook-url').value = '';
+        document.getElementById('employee-id').value = '';
+        document.getElementById('remember-key').checked = false;
+        alert('Saved settings cleared.');
+    }
+
+    /* === Theme === */
+    const SUN_ICON = '<path d="M8 11a3 3 0 100-6 3 3 0 000 6zM8 1.5v1.5M8 13v1.5M2.5 8H1M15 8h-1.5M3.5 3.5l1 1M11.5 11.5l1 1M3.5 12.5l1-1M11.5 4.5l1-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>';
+    const MOON_ICON = '<path d="M14 9.5A6 6 0 016.5 2 6 6 0 1014 9.5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>';
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        document.getElementById('theme-icon').innerHTML = theme === 'light' ? SUN_ICON : MOON_ICON;
+    }
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        safeSet(STORAGE_KEYS.theme, next);
+    }
+
+    /* === Settings collapse === */
+    function toggleSettings() {
+        const header = document.getElementById('settings-header');
+        const body = document.getElementById('settings-body');
+        header.classList.toggle('open');
+        body.classList.toggle('collapsed');
+    }
+
+    /* === File parsing === */
+    let parsedRows = null;
+    let detectedHeaders = null;
+    let currentUids = [];
+
+    async function readFileAsRows(file) {
+        const name = file.name.toLowerCase();
+        const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
+        if (isExcel) {
+            if (typeof XLSX === 'undefined') throw new Error('Excel parser failed to load. Save as CSV.');
+            const buffer = await file.arrayBuffer();
+            const workbook = XLSX.read(buffer, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            if (!firstSheet) throw new Error('Excel file has no sheets.');
+            return XLSX.utils.sheet_to_json(firstSheet, { header: 1, blankrows: false });
         }
+        const text = await file.text();
+        if (text.length > 2 && text.charCodeAt(0) === 0x50 && text.charCodeAt(1) === 0x4B) {
+            throw new Error('Looks like a binary/zip file with the wrong extension. Save as .csv or .xlsx.');
+        }
+        return text.split(/\r?\n/).filter(l => l.length > 0).map(line => line.split(',').map(c => c.trim()));
+    }
 
-        // Update pill when dryrun checkbox toggles
-        document.getElementById('dryrun-check').addEventListener('change', function() {
-            const pill = document.getElementById('mode-pill');
-            if (this.checked) {
-                pill.className = 'pill safe';
-                pill.textContent = '● Safe';
-            } else {
-                pill.className = 'pill danger';
-                pill.textContent = '● Live';
-            }
+    function looksLikeHeader(row) {
+        if (!row || row.length === 0) return false;
+        const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}/i;
+        return !row.some(c => uuidRe.test(String(c || '')));
+    }
+
+    function colLetter(idx) {
+        let label = '', n = idx;
+        while (n >= 0) {
+            label = String.fromCharCode(65 + (n % 26)) + label;
+            n = Math.floor(n / 26) - 1;
+        }
+        return label;
+    }
+
+    function populateColumnSelect() {
+        const select = document.getElementById('column-select');
+        select.innerHTML = '';
+        if (!parsedRows || parsedRows.length === 0) return;
+        const headerRow = looksLikeHeader(parsedRows[0]) ? parsedRows[0] : null;
+        detectedHeaders = headerRow;
+        const sampleRow = headerRow ? (parsedRows[1] || []) : (parsedRows[0] || []);
+        const numCols = Math.max(sampleRow.length, headerRow ? headerRow.length : 0, 1);
+        for (let i = 0; i < numCols; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            const headerCell = headerRow && headerRow[i] ? String(headerRow[i]).trim() : '';
+            const baseLabel = headerCell || `Column ${colLetter(i)}`;
+            const sample = sampleRow[i] != null ? String(sampleRow[i]).slice(0, 24) : '';
+            opt.textContent = `${baseLabel}${sample ? ' — ' + sample : ''}`;
+            select.appendChild(opt);
+        }
+        // Auto-pick first UUID-looking column
+        const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}/i;
+        const startRow = headerRow ? 1 : 0;
+        for (let c = 0; c < numCols; c++) {
+            const sample = parsedRows[startRow] && parsedRows[startRow][c];
+            if (sample && uuidRe.test(String(sample))) { select.value = c; break; }
+        }
+    }
+
+    function extractUidsForColumn(colIdx) {
+        if (!parsedRows) return [];
+        const startRow = detectedHeaders ? 1 : 0;
+        const uids = [];
+        for (let r = startRow; r < parsedRows.length; r++) {
+            const cell = parsedRows[r] && parsedRows[r][colIdx];
+            if (cell != null && String(cell).trim()) uids.push(String(cell).trim());
+        }
+        return uids;
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderPreview(uids) {
+        const wrap = document.getElementById('preview-wrap');
+        const panel = document.getElementById('preview-panel');
+        if (!uids.length) {
+            panel.classList.remove('visible');
+            wrap.style.display = 'none';
+            return;
+        }
+        panel.innerHTML = uids.map((u, i) =>
+            `<div class="preview-row"><span class="num">${i + 1}.</span>${escapeHtml(u)}</div>`
+        ).join('');
+        panel.classList.add('visible');
+        wrap.style.display = 'flex';
+    }
+
+    function setFileInfo(text, kind) {
+        const info = document.getElementById('file-info');
+        info.textContent = text;
+        info.className = 'file-info' + (kind ? ' ' + kind : '');
+    }
+
+    function updateFileInfoCount() {
+        if (currentUids.length === 0) {
+            setFileInfo('⚠ No UIDs detected in selected column.', 'warn');
+        } else {
+            setFileInfo(`✓ ${currentUids.length} UID${currentUids.length === 1 ? '' : 's'} detected.`, 'ok');
+        }
+    }
+
+    function updateFileLabel(input) {
+        const labelText = document.getElementById('file-label-text');
+        if (input.files && input.files[0]) {
+            labelText.innerHTML = '<span>' + escapeHtml(input.files[0].name) + '</span>';
+        } else {
+            labelText.innerHTML = '<span>Choose file</span> or drag & drop — .csv, .txt, .xlsx';
+        }
+    }
+
+    async function onFileChange(e) {
+        const file = e.target.files[0];
+        const colSection = document.getElementById('column-section');
+        updateFileLabel(e.target);
+        if (!file) {
+            setFileInfo('', '');
+            colSection.style.display = 'none';
+            renderPreview([]);
+            parsedRows = null; currentUids = [];
+            return;
+        }
+        try {
+            parsedRows = await readFileAsRows(file);
+            populateColumnSelect();
+            colSection.style.display = parsedRows.length > 0 ? 'flex' : 'none';
+            const colIdx = parseInt(document.getElementById('column-select').value, 10) || 0;
+            currentUids = extractUidsForColumn(colIdx);
+            renderPreview(currentUids);
+            updateFileInfoCount();
+        } catch (err) {
+            setFileInfo('✗ ' + err.message, 'err');
+            colSection.style.display = 'none';
+            renderPreview([]);
+            parsedRows = null; currentUids = [];
+        }
+    }
+
+    function onColumnChange() {
+        const colIdx = parseInt(document.getElementById('column-select').value, 10) || 0;
+        currentUids = extractUidsForColumn(colIdx);
+        renderPreview(currentUids);
+        updateFileInfoCount();
+    }
+
+    /* === Run state === */
+    function toggleSubmit(checkbox) {
+        document.getElementById('submit-btn').disabled = !checkbox.checked;
+    }
+
+    let logRows = [];
+    let dryRunContext = null;
+    let lastFailedUids = [];
+    let lastRunContext = null;
+    let isPaused = false;
+    let isCancelled = false;
+    let isRunning = false;
+
+    function appendLog(uid, level, message) {
+        const log = document.getElementById('log');
+        const row = document.createElement('div');
+        row.className = 'log-row ' + level;
+        const icon = level === 'ok' ? '✓' : level === 'warn' ? '⚠' : '✗';
+        row.textContent = `${icon} ${uid} — ${message}`;
+        log.appendChild(row);
+        log.scrollTop = log.scrollHeight;
+        logRows.push({
+            uid,
+            status: level === 'ok' ? 'success' : level === 'warn' ? 'warning' : 'failed',
+            message
         });
+    }
 
-        async function readFileAsText(file) {
-            const name = file.name.toLowerCase();
-            const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
-            if (isExcel) {
-                if (typeof XLSX === 'undefined') throw new Error('Excel parser failed to load. Check your internet connection or save the file as CSV.');
-                const buffer = await file.arrayBuffer();
-                const workbook = XLSX.read(buffer, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                if (!firstSheet) throw new Error('Excel file has no sheets.');
-                const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, blankrows: false });
-                return rows.map(r => (r && r[0] != null ? String(r[0]) : '')).join('\n');
-            }
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const text = reader.result;
-                    if (text.length > 2 && text.charCodeAt(0) === 0x50 && text.charCodeAt(1) === 0x4B) {
-                        reject(new Error('This looks like an Excel/zip file with the wrong extension. Rename it to .xlsx or save it as .csv.'));
-                        return;
-                    }
-                    resolve(text);
-                };
-                reader.onerror = () => reject(reader.error);
-                reader.readAsText(file);
+    async function deleteOne(baseUrl, module, uid, apiKey, dryRun) {
+        const url = `${baseUrl}${module}/${encodeURIComponent(uid)}`;
+        const method = dryRun ? 'GET' : 'DELETE';
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' }
             });
-        }
-
-        function parseUIDs(text) {
-            return text
-                .split(/\r?\n/)
-                .map(line => line.split(',')[0].trim())
-                .filter(line => line && !/^uid$|^id$|^_uid$/i.test(line));
-        }
-
-        function appendLog(uid, ok, message) {
-            const log = document.getElementById('log');
-            const row = document.createElement('div');
-            row.className = 'log-row ' + (ok ? 'ok' : 'err');
-            row.textContent = (ok ? '✓' : '✗') + ' ' + uid + ' — ' + message;
-            log.appendChild(row);
-            log.scrollTop = log.scrollHeight;
-            logRows.push({ uid, status: ok ? 'success' : 'failed', message });
-        }
-
-        async function deleteOne(baseUrl, module, uid, apiKey, dryRun) {
-            const url = baseUrl + module + '/' + encodeURIComponent(uid);
-            const method = dryRun ? 'GET' : 'DELETE';
+            if (res.ok) return { ok: true, message: dryRun ? `${res.status} found` : `${res.status} OK` };
+            let detail = '';
             try {
-                const res = await fetch(url, {
-                    method,
-                    headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' }
-                });
-                if (res.ok) return { ok: true, message: dryRun ? res.status + ' found' : res.status + ' OK' };
-                let detail = '';
-                try {
-                    const body = await res.json();
-                    detail = body.message || body.error || JSON.stringify(body).slice(0, 120);
-                } catch { detail = await res.text().then(t => t.slice(0, 120)).catch(() => ''); }
-                return { ok: false, message: res.status + ' ' + detail };
-            } catch (err) {
-                return { ok: false, message: 'Network error: ' + err.message };
+                const body = await res.json();
+                detail = body.message || body.error || JSON.stringify(body).slice(0, 120);
+            } catch {
+                detail = await res.text().then(t => t.slice(0, 120)).catch(() => '');
             }
+            return { ok: false, message: `${res.status} ${detail}` };
+        } catch (err) {
+            return { ok: false, message: `Network error: ${err.message}` };
         }
+    }
 
-        async function executeRun(baseUrl, module, apiKey, uids, dryRun) {
-            const submitBtn  = document.getElementById('submit-btn');
-            const proceedBtn = document.getElementById('proceed-delete-btn');
-            logRows = [];
-            document.getElementById('log').innerHTML = '';
-            document.getElementById('download-btn').style.display = 'none';
-            proceedBtn.style.display = 'none';
-            document.getElementById('results').classList.add('visible');
-            document.getElementById('progress-fill').style.width = '0%';
+    async function runDependencyCheck(module, uid, baseUrl, apiKey) {
+        const fn = DEPENDENCY_CHECKS[module];
+        if (!fn) return { configured: false };
+        try {
+            const result = await fn(uid, baseUrl, apiKey);
+            return { configured: true, ...result };
+        } catch (err) {
+            return { configured: true, hasDependents: false, error: err.message };
+        }
+    }
 
-            document.getElementById('lbl-success').textContent = dryRun ? 'Found' : 'Deleted';
-            document.getElementById('lbl-failed').textContent  = dryRun ? 'Not Found' : 'Failed';
-            document.getElementById('stat-total').textContent   = uids.length;
-            document.getElementById('stat-success').textContent = '0';
-            document.getElementById('stat-failed').textContent  = '0';
+    function togglePause() {
+        if (!isRunning) return;
+        isPaused = !isPaused;
+        document.getElementById('pause-btn').innerHTML = isPaused
+            ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 2v8l7-4-7-4z" fill="currentColor"/></svg> Resume'
+            : '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="3" y="2" width="2" height="8" fill="currentColor"/><rect x="7" y="2" width="2" height="8" fill="currentColor"/></svg> Pause';
+    }
+    function cancelRun() {
+        if (!isRunning) return;
+        if (!confirm('Cancel the current run? Progress so far is kept in the log.')) return;
+        isCancelled = true; isPaused = false;
+    }
+    async function waitWhilePaused() {
+        while (isPaused && !isCancelled) await new Promise(r => setTimeout(r, 200));
+    }
 
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="5.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M7.5 2a5.5 5.5 0 015.5 5.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>' + (dryRun ? ' Checking…' : ' Deleting…');
+    async function executeRun(baseUrl, module, apiKey, uids, dryRun, opts = {}) {
+        const submitBtn  = document.getElementById('submit-btn');
+        const proceedBtn = document.getElementById('proceed-delete-btn');
+        const retryBtn   = document.getElementById('retry-btn');
+        const runCtrl    = document.getElementById('run-controls');
 
-            const foundUids = [];
-            let success = 0, failed = 0;
-            for (let i = 0; i < uids.length; i++) {
+        // Reset UI
+        logRows = [];
+        document.getElementById('log').innerHTML = '';
+        document.getElementById('download-btn').style.display = 'none';
+        proceedBtn.style.display = 'none';
+        retryBtn.style.display = 'none';
+        document.getElementById('results').classList.add('visible');
+        document.getElementById('progress-fill').style.width = '0%';
+        runCtrl.classList.add('visible');
+        document.getElementById('pause-btn').innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="3" y="2" width="2" height="8" fill="currentColor"/><rect x="7" y="2" width="2" height="8" fill="currentColor"/></svg> Pause';
+
+        const preflightActive = !!opts.preflight && !dryRun && !!DEPENDENCY_CHECKS[module];
+        document.getElementById('stat-warning-col').style.display = preflightActive ? 'block' : 'none';
+
+        document.getElementById('lbl-success').textContent = dryRun ? 'Found' : 'Deleted';
+        document.getElementById('lbl-failed').textContent  = dryRun ? 'Not Found' : 'Failed';
+        document.getElementById('stat-total').textContent   = uids.length;
+        document.getElementById('stat-success').textContent = '0';
+        document.getElementById('stat-failed').textContent  = '0';
+        document.getElementById('stat-warning').textContent = '0';
+
+        submitBtn.disabled = true;
+        proceedBtn.disabled = true;
+        retryBtn.disabled = true;
+        submitBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="5.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M7.5 2a5.5 5.5 0 015.5 5.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg> ' + (dryRun ? 'Checking…' : 'Deleting…');
+
+        isRunning = true; isPaused = false; isCancelled = false;
+
+        const concurrency = parseInt(document.getElementById('concurrency').value, 10) || 1;
+        const foundUids = [];
+        const failedUids = [];
+        let success = 0, failed = 0, warnings = 0, completed = 0;
+
+        let nextIdx = 0;
+        async function worker() {
+            while (true) {
+                if (isCancelled) return;
+                await waitWhilePaused();
+                const i = nextIdx++;
+                if (i >= uids.length) return;
                 const uid = uids[i];
+
+                if (preflightActive) {
+                    const dep = await runDependencyCheck(module, uid, baseUrl, apiKey);
+                    if (dep.error) {
+                        warnings++;
+                        document.getElementById('stat-warning').textContent = warnings;
+                        appendLog(uid, 'warn', `Pre-flight error: ${dep.error}; proceeding`);
+                    } else if (dep.hasDependents) {
+                        warnings++; failed++; failedUids.push(uid);
+                        document.getElementById('stat-warning').textContent = warnings;
+                        document.getElementById('stat-failed').textContent = failed;
+                        appendLog(uid, 'warn', `Has ${dep.count} ${dep.type || 'dependent'} record(s); skipped`);
+                        completed++;
+                        document.getElementById('progress-fill').style.width = (completed / uids.length * 100) + '%';
+                        continue;
+                    }
+                }
+
                 const result = await deleteOne(baseUrl, module, uid, apiKey, dryRun);
-                if (result.ok) { success++; if (dryRun) foundUids.push(uid); document.getElementById('stat-success').textContent = success; }
-                else { failed++; document.getElementById('stat-failed').textContent = failed; }
-                appendLog(uid, result.ok, result.message);
-                document.getElementById('progress-fill').style.width = (((i + 1) / uids.length) * 100) + '%';
-                if (DELAY_MS > 0 && i < uids.length - 1) await new Promise(r => setTimeout(r, DELAY_MS));
-            }
-
-            submitBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 3l8 4.5L4 12V3z" fill="white"/></svg> Run';
-            document.getElementById('confirm-check').checked = false;
-            submitBtn.disabled = true;
-            document.getElementById('download-btn').style.display = 'flex';
-
-            if (dryRun && foundUids.length > 0) {
-                dryRunContext = { baseUrl, module, apiKey, foundUids, region: document.getElementById('region').value };
-                proceedBtn.textContent = '';
-                proceedBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Delete ' + foundUids.length + ' found record(s)';
-                proceedBtn.style.display = 'flex';
-                proceedBtn.disabled = false;
-            } else {
-                dryRunContext = null;
+                if (result.ok) {
+                    success++;
+                    if (dryRun) foundUids.push(uid);
+                    document.getElementById('stat-success').textContent = success;
+                    appendLog(uid, 'ok', result.message);
+                } else {
+                    failed++; failedUids.push(uid);
+                    document.getElementById('stat-failed').textContent = failed;
+                    appendLog(uid, 'err', result.message);
+                }
+                completed++;
+                document.getElementById('progress-fill').style.width = (completed / uids.length * 100) + '%';
             }
         }
 
-        async function runBulkDelete() {
-            const employeeId = document.getElementById('employee-id').value.trim();
-            const region     = document.getElementById('region').value;
-            const apiKey     = document.getElementById('apikey').value.trim();
-            const module     = document.getElementById('module').value;
-            const fileInput  = document.getElementById('file');
-            const dryRun     = document.getElementById('dryrun-check').checked;
+        const workers = [];
+        for (let w = 0; w < Math.min(concurrency, uids.length); w++) workers.push(worker());
+        await Promise.all(workers);
 
-            if (!employeeId || !apiKey || !fileInput.files[0]) { alert('Please fill in all fields and select a file.'); return; }
+        isRunning = false;
+        runCtrl.classList.remove('visible');
+        submitBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 3l8 4.5L4 12V3z" fill="white"/></svg> Run';
+        document.getElementById('confirm-check').checked = false;
+        submitBtn.disabled = true;
+        proceedBtn.disabled = false;
+        retryBtn.disabled = false;
+        document.getElementById('download-btn').style.display = 'flex';
 
-            const baseUrl = REGION_URLS[region];
-            if (!baseUrl) { alert('Unknown region.'); return; }
-
-            let uids;
-            try {
-                const text = await readFileAsText(fileInput.files[0]);
-                uids = parseUIDs(text);
-            } catch (err) { alert('Could not read file: ' + err.message); return; }
-
-            if (uids.length === 0) { alert('No UIDs found in file.'); return; }
-
-            const action  = dryRun ? 'Check' : 'Delete';
-            const note    = dryRun ? '\n\nDry run — no records will be deleted.' : '\n\nThis cannot be undone.';
-            const preview = uids.slice(0, 5).join('\n') + (uids.length > 5 ? '\n…and ' + (uids.length - 5) + ' more' : '');
-            if (!confirm(action + ' ' + uids.length + ' ' + module + ' record(s) in ' + region + '?\n\nFirst UIDs:\n' + preview + note)) return;
-
-            await executeRun(baseUrl, module, apiKey, uids, dryRun);
-        }
-
-        async function proceedToDelete() {
-            if (!dryRunContext) { alert('No dry-run results to proceed from. Run a dry run first.'); return; }
-            const { baseUrl, module, apiKey, foundUids, region } = dryRunContext;
-            const preview = foundUids.slice(0, 5).join('\n') + (foundUids.length > 5 ? '\n…and ' + (foundUids.length - 5) + ' more' : '');
-            if (!confirm('Permanently DELETE ' + foundUids.length + ' record(s) verified by dry run?\n\nModule: ' + module + '\nRegion: ' + region + '\n\nFirst UIDs:\n' + preview + '\n\nThis cannot be undone.')) return;
+        if (dryRun && foundUids.length > 0 && !isCancelled) {
+            dryRunContext = { baseUrl, module, apiKey, foundUids, region: document.getElementById('region').value };
+            proceedBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Delete ' + foundUids.length + ' found record(s)';
+            proceedBtn.style.display = 'flex';
+        } else if (!dryRun) {
             dryRunContext = null;
-            await executeRun(baseUrl, module, apiKey, foundUids, false);
         }
 
-        function downloadLog() {
-            const header = 'uid,status,message\n';
-            const csv = header + logRows.map(r =>
-                '"' + r.uid.replace(/"/g, '""') + '","' + r.status + '","' + (r.message || '').replace(/"/g, '""') + '"'
-            ).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'bulk-delete-log-' + Date.now() + '.csv';
-            a.click();
-            URL.revokeObjectURL(url);
+        if (failedUids.length > 0 && !isCancelled) {
+            lastFailedUids = failedUids;
+            lastRunContext = { baseUrl, module, apiKey, dryRun, preflight: opts.preflight };
+            retryBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5a4.5 4.5 0 108-2.83M10 1.5v3h-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg> Retry ' + failedUids.length + ' failed';
+            retryBtn.style.display = 'flex';
+        } else {
+            lastFailedUids = [];
         }
+
+        await sendSlackAudit({
+            employeeId: document.getElementById('employee-id').value.trim(),
+            region: document.getElementById('region').value,
+            module,
+            mode: dryRun ? 'dry-run' : 'delete',
+            preflight: !!opts.preflight,
+            total: uids.length,
+            success, failed, warnings,
+            cancelled: isCancelled
+        });
+    }
+
+    async function runBulkDelete() {
+        const employeeId = document.getElementById('employee-id').value.trim();
+        const region     = document.getElementById('region').value;
+        const apiKey     = document.getElementById('apikey').value.trim();
+        const moduleVal  = document.getElementById('module').value;
+        const dryRun     = document.getElementById('dryrun-check').checked;
+        const preflight  = document.getElementById('preflight-check').checked;
+
+        if (!employeeId || !apiKey) {
+            alert('Please fill in Employee ID and API Key.');
+            return;
+        }
+        if (!currentUids.length) {
+            alert('No UIDs detected. Upload a file and pick the right column.');
+            return;
+        }
+        const baseUrl = REGION_URLS[region];
+        if (!baseUrl) { alert('Unknown region.'); return; }
+
+        if (preflight && !dryRun && !DEPENDENCY_CHECKS[moduleVal]) {
+            if (!confirm(`Pre-flight check is not yet configured for "${moduleVal}". Records will be deleted without checking for dependents. Continue?`)) return;
+        }
+
+        const action = dryRun ? 'Check' : 'Delete';
+        const note   = dryRun ? '\n\nDry run — no records will be deleted.' : '\n\nThis cannot be undone.';
+        const previewSample = currentUids.slice(0, 5).join('\n') + (currentUids.length > 5 ? `\n…and ${currentUids.length - 5} more` : '');
+        if (!confirm(`${action} ${currentUids.length} ${moduleVal} record(s) in ${region}?\n\nFirst UIDs:\n${previewSample}${note}`)) return;
+
+        saveSettings();
+        await executeRun(baseUrl, moduleVal, apiKey, currentUids, dryRun, { preflight });
+    }
+
+    async function proceedToDelete() {
+        if (!dryRunContext) { alert('No dry-run results to proceed from.'); return; }
+        const { baseUrl, module, apiKey, foundUids, region } = dryRunContext;
+        const preflight = document.getElementById('preflight-check').checked;
+        const previewSample = foundUids.slice(0, 5).join('\n') + (foundUids.length > 5 ? `\n…and ${foundUids.length - 5} more` : '');
+        if (!confirm(`Permanently DELETE ${foundUids.length} record(s)?\n\nModule: ${module}\nRegion: ${region}\n\nFirst UIDs:\n${previewSample}\n\nThis cannot be undone.`)) return;
+        dryRunContext = null;
+        await executeRun(baseUrl, module, apiKey, foundUids, false, { preflight });
+    }
+
+    async function retryFailed() {
+        if (!lastFailedUids.length || !lastRunContext) return;
+        const { baseUrl, module, apiKey, dryRun, preflight } = lastRunContext;
+        if (!confirm(`Retry ${lastFailedUids.length} failed record(s)?`)) return;
+        const uidsToRetry = lastFailedUids.slice();
+        lastFailedUids = [];
+        await executeRun(baseUrl, module, apiKey, uidsToRetry, dryRun, { preflight });
+    }
+
+    /* === Slack audit === */
+    async function sendSlackAudit(summary) {
+        const url = document.getElementById('webhook-url').value.trim();
+        if (!url) return;
+        const text = [
+            `*Bulk Delete Run* — ${summary.mode}${summary.cancelled ? ' (cancelled)' : ''}`,
+            `• User: \`${summary.employeeId || 'unknown'}\``,
+            `• Region: \`${summary.region}\` • Module: \`${summary.module}\``,
+            `• Pre-flight: ${summary.preflight ? 'on' : 'off'}`,
+            `• Total: ${summary.total} • ✅ ${summary.success} • ❌ ${summary.failed}${summary.warnings ? ' • ⚠ ' + summary.warnings : ''}`
+        ].join('\n');
+        try {
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+        } catch (err) {
+            console.warn('Slack audit failed:', err);
+        }
+    }
+
+    /* === Download log === */
+    function downloadLog() {
+        const header = 'uid,status,message\n';
+        const csv = header + logRows.map(r =>
+            `"${(r.uid || '').replace(/"/g, '""')}","${r.status}","${(r.message || '').replace(/"/g, '""')}"`
+        ).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `bulk-delete-log-${Date.now()}.csv`; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    /* === Mode pill === */
+    document.getElementById('dryrun-check').addEventListener('change', function() {
+        const pill = document.getElementById('mode-pill');
+        if (this.checked) {
+            pill.className = 'pill safe';
+            pill.textContent = '● Safe';
+        } else {
+            pill.className = 'pill danger';
+            pill.textContent = '● Live';
+        }
+    });
+
+    /* === Wiring === */
+    document.getElementById('file').addEventListener('change', onFileChange);
+    document.getElementById('column-select').addEventListener('change', onColumnChange);
+    document.getElementById('region').addEventListener('change', saveSettings);
+    document.getElementById('module').addEventListener('change', saveSettings);
+    document.getElementById('employee-id').addEventListener('blur', saveSettings);
+    document.getElementById('apikey').addEventListener('blur', saveSettings);
+    document.getElementById('webhook-url').addEventListener('blur', saveSettings);
+    document.getElementById('concurrency').addEventListener('change', saveSettings);
+    document.getElementById('remember-key').addEventListener('change', saveSettings);
+
+    loadSettings();
     </script>
 </body>
 </html>
