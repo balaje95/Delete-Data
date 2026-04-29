@@ -1018,6 +1018,12 @@
         'us-west-1c': 'https://us-west-1c.zuperpro.com/api/'
     };
 
+    /* All Zuper API calls route through our Vercel serverless proxy to bypass CORS.
+     * The proxy is whitelisted to *.zuperpro.com only — see /api/zuper-proxy.js. */
+    function proxiedFetch(targetUrl, opts = {}) {
+        return fetch('/api/zuper-proxy?target=' + encodeURIComponent(targetUrl), opts);
+    }
+
     /* === Dependency check framework — placeholders ===
      *
      * Each entry receives (uid, baseUrl, apiKey) and must return:
@@ -1309,7 +1315,7 @@
         const url = `${baseUrl}${module}/${encodeURIComponent(uid)}`;
         const method = dryRun ? 'GET' : 'DELETE';
         try {
-            const res = await fetch(url, {
+            const res = await proxiedFetch(url, {
                 method,
                 headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' }
             });
@@ -1673,7 +1679,7 @@
             while (page <= maxPages) {
                 // Try Zuper's typical paginated list pattern
                 const url = `${baseUrl}${moduleVal}?page=${page}&count=${limit}`;
-                const res = await fetch(url, { headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } });
+                const res = await proxiedFetch(url, { method: 'GET', headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } });
 
                 if (!res.ok) {
                     const body = await res.text().then(t => t.slice(0, 300)).catch(() => '');
