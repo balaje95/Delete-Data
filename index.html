@@ -571,8 +571,8 @@
         </div>
     </header>
 
-    <!-- Settings card -->
-    <div class="card">
+    <!-- Settings card (hidden by default — toggle with Ctrl+Shift+A) -->
+    <div class="card" id="settings-card" style="display:none;">
         <div class="card-header collapsible" id="settings-header" onclick="toggleSettings()">
             <div class="card-header-icon">
                 <svg viewBox="0 0 20 20" fill="none">
@@ -675,6 +675,8 @@
                             <option value="property">Property</option>
                             <option value="assets">Asset</option>
                             <option value="product">Parts and Services</option>
+                            <option value="purchase_order">Purchase Order</option>
+                            <option value="material_requests">Material Orders</option>
                             <option value="jobs">Job</option>
                             <option value="invoice">Invoice</option>
                             <option value="estimate">Quote / Estimate</option>
@@ -751,19 +753,7 @@
                 </div>
             </div>
 
-            <div class="toggle-row">
-                <div class="cb-wrap">
-                    <input type="checkbox" id="confirm-check" onchange="toggleSubmit(this)">
-                    <div class="cb-box">
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </div>
-                </div>
-                <div class="toggle-text">
-                    I understand this will permanently delete selected records when dry run is off.
-                </div>
-            </div>
-
-            <button type="button" id="submit-btn" class="run-btn" disabled onclick="runBulkDelete()">
+            <button type="button" id="submit-btn" class="run-btn" onclick="runBulkDelete()">
                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 3l8 4.5L4 12V3z" fill="white"/></svg>
                 Run
             </button>
@@ -855,6 +845,8 @@
         property:         null,
         assets:           null,
         product:          null,
+        purchase_order:   null,
+        material_requests: null,
         jobs:             null,
         invoice:          null,
         estimate:         null,
@@ -1093,10 +1085,6 @@
     }
 
     /* === Run state === */
-    function toggleSubmit(checkbox) {
-        document.getElementById('submit-btn').disabled = !checkbox.checked;
-    }
-
     let logRows = [];
     let dryRunContext = null;
     let lastFailedUids = [];
@@ -1257,8 +1245,7 @@
         isRunning = false;
         runCtrl.classList.remove('visible');
         submitBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 3l8 4.5L4 12V3z" fill="white"/></svg> Run';
-        document.getElementById('confirm-check').checked = false;
-        submitBtn.disabled = true;
+        submitBtn.disabled = false;
         proceedBtn.disabled = false;
         retryBtn.disabled = false;
         document.getElementById('download-btn').style.display = 'flex';
@@ -1400,6 +1387,22 @@
     document.getElementById('webhook-url').addEventListener('blur', saveSettings);
     document.getElementById('concurrency').addEventListener('change', saveSettings);
     document.getElementById('remember-key').addEventListener('change', saveSettings);
+
+    /* === Hidden admin panel — toggle with Ctrl/Cmd + Shift + A === */
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
+            e.preventDefault();
+            const card = document.getElementById('settings-card');
+            const isHidden = card.style.display === 'none';
+            card.style.display = isHidden ? '' : 'none';
+            if (isHidden) {
+                // Auto-expand the body when revealing, so it's immediately usable
+                document.getElementById('settings-header').classList.add('open');
+                document.getElementById('settings-body').classList.remove('collapsed');
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    });
 
     loadSettings();
     </script>
