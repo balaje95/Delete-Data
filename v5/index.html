@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Delete — Zuper</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --orange:       #E8622A;
+            --orange-light: #F5986A;
+            --orange-dim:   rgba(232, 98, 42, 0.12);
+            --charcoal:     #2C2C2C;
+            --surface:      #1E1E1E;
+            --card:         #272727;
+            --border:       rgba(255,255,255,0.08);
+            --border-strong: rgba(255,255,255,0.15);
+            --border-focus: rgba(232, 98, 42, 0.5);
+            --text:         #F0F0F0;
+            --muted:        #9A9A9A;
+            --placeholder:  #555;
+            --hover-bg:     rgba(255,255,255,0.05);
+            --hover-bg-strong: rgba(255,255,255,0.09);
+            --log-bg:       #161616;
+            --success:      #4EC876;
+            --danger:       #FF5C5C;
+            --warning:      #F2C744;
+            --radius:       10px;
+        }
+
+        [data-theme="light"] {
+            --orange:       #E8622A;
+            --orange-light: #D4541F;
+            --orange-dim:   rgba(232, 98, 42, 0.10);
+            --charcoal:     #E5E5E5;
+            --surface:      #F4F4F4;
+            --card:         #FFFFFF;
+            --border:       rgba(0,0,0,0.08);
+            --border-strong: rgba(0,0,0,0.18);
+            --border-focus: rgba(232, 98, 42, 0.55);
+            --text:         #1A1A1A;
+            --muted:        #6B6B6B;
+            --placeholder:  #B5B5B5;
+            --hover-bg:     rgba(0,0,0,0.04);
+            --hover-bg-strong: rgba(0,0,0,0.07);
+            --log-bg:       #F8F8F8;
+            --success:      #2D9F47;
+            --danger:       #D62828;
+            --warning:      #B8651D;
+        }
+
+        html, body {
+            min-height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: var(--surface);
+            color: var(--text);
+            transition: background 0.2s, color 0.2s;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 16px 60px;
+        }
+
+        /* ── Header ── */
+        header {
+            width: 100%;
+            max-width: 560px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        header img { height: 36px; }
+
+        .header-right { display: flex; align-items: center; gap: 10px; }
+
+        .header-badge {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            background: var(--hover-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 12px;
+        }
+
+        .icon-btn {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: var(--hover-bg);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, color 0.15s;
+            padding: 0;
+        }
+        .icon-btn:hover { background: var(--hover-bg-strong); color: var(--text); }
+
+        /* Light theme: invert logo so it's visible on light background */
+        [data-theme="light"] header img {
+            filter: invert(1) hue-rotate(180deg);
+        }
+
+        /* ── Card ── */
+        .card {
+            width: 100%;
+            max-width: 560px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .card + .card { margin-top: 14px; }
+
+        .card-header {
+            padding: 22px 28px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-header.collapsible {
+            cursor: pointer;
+            user-select: none;
+            padding-bottom: 22px;
+        }
+        .card-header.collapsible:hover { background: var(--hover-bg); }
+        .card-header.collapsible.open { border-bottom: 1px solid var(--border); padding-bottom: 18px; }
+        .card-header.collapsible:not(.open) { border-bottom: none; }
+
+        .card-header-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            background: var(--orange-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .card-header-icon svg { width: 18px; height: 18px; }
+
+        .card-header h1, .card-header h2 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .card-header h2 { font-size: 14px; }
+
+        .card-header p {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .card-header-grow { flex: 1; }
+        .chev {
+            transition: transform 0.2s;
+            color: var(--muted);
+            display: flex;
+        }
+        .card-header.collapsible.open .chev { transform: rotate(180deg); }
+
+        .card-body { padding: 24px 28px; }
+        .card-body.collapsed { display: none; }
+
+        /* ── Form grid ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.span2 { grid-column: 1 / -1; }
+
+        label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 13px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        input:focus, select:focus { border-color: var(--border-focus); }
+        input::placeholder { color: var(--placeholder); }
+        input[type="password"] { letter-spacing: 0.1em; }
+        input[type="password"]::placeholder { letter-spacing: 0; }
+
+        .select-wrap { position: relative; }
+        .select-wrap::after {
+            content: '';
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            translate: 0 -50%;
+            width: 0; height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid var(--muted);
+            pointer-events: none;
+        }
+
+        .helper-text {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: -2px;
+        }
+
+        /* File input */
+        .file-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 13px;
+            background: var(--surface);
+            border: 1px dashed var(--border-strong);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+        .file-label:hover { border-color: var(--orange-light); }
+        .file-label-icon { color: var(--muted); flex-shrink: 0; }
+        .file-label-text { font-size: 13px; color: var(--muted); }
+        .file-label-text span { color: var(--orange-light); font-weight: 500; }
+        input[type="file"] { display: none; }
+
+        .file-info {
+            font-size: 12px;
+            margin-top: 2px;
+            min-height: 16px;
+        }
+        .file-info.ok { color: var(--success); }
+        .file-info.warn { color: var(--warning); }
+        .file-info.err { color: var(--danger); }
+
+        /* Preview panel */
+        .preview-panel {
+            display: none;
+            margin-top: 8px;
+            background: var(--log-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            max-height: 140px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        .preview-panel.visible { display: block; }
+        .preview-panel::-webkit-scrollbar { width: 4px; }
+        .preview-panel::-webkit-scrollbar-track { background: transparent; }
+        .preview-panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+        .preview-row { padding: 1px 0; color: var(--text); }
+        .preview-row .num {
+            color: var(--muted);
+            display: inline-block;
+            width: 32px;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 22px 0;
+        }
+
+        /* Warning */
+        .warning {
+            display: flex;
+            gap: 10px;
+            padding: 12px 14px;
+            background: rgba(255, 92, 92, 0.07);
+            border: 1px solid rgba(255, 92, 92, 0.25);
+            border-radius: 8px;
+            margin-bottom: 18px;
+        }
+        [data-theme="light"] .warning {
+            background: rgba(214, 40, 40, 0.06);
+            border-color: rgba(214, 40, 40, 0.25);
+        }
+        .warning svg { flex-shrink: 0; margin-top: 1px; }
+        .warning-body { font-size: 12.5px; color: #FF9090; line-height: 1.5; }
+        [data-theme="light"] .warning-body { color: #C0392B; }
+        .warning-body strong { display: block; color: var(--danger); font-weight: 600; margin-bottom: 2px; }
+
+        /* Toggles */
+        .toggle-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .toggle-row:last-of-type { margin-bottom: 0; }
+
+        /* Custom checkbox */
+        .cb-wrap {
+            position: relative;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .cb-wrap input[type="checkbox"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            margin: 0;
+            padding: 0;
+        }
+        .cb-box {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+            border: 1.5px solid var(--border-strong);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, border-color 0.15s;
+            pointer-events: none;
+        }
+        .cb-wrap input:checked ~ .cb-box {
+            background: var(--orange);
+            border-color: var(--orange);
+        }
+        .cb-box svg { display: none; }
+        .cb-wrap input:checked ~ .cb-box svg { display: block; }
+
+        .toggle-text { font-size: 13px; line-height: 1.5; color: var(--text); }
+        .toggle-text strong { font-weight: 600; }
+        .toggle-text em { font-style: normal; color: var(--muted); font-size: 12px; }
+
+        /* Pill indicator */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 9px;
+            border-radius: 20px;
+            margin-left: 6px;
+        }
+        .pill.safe { background: rgba(78, 200, 118, 0.12); color: var(--success); }
+        .pill.danger { background: rgba(255, 92, 92, 0.12); color: var(--danger); }
+        [data-theme="light"] .pill.safe { background: rgba(45, 159, 71, 0.12); }
+        [data-theme="light"] .pill.danger { background: rgba(214, 40, 40, 0.10); }
+
+        /* Run button */
+        .run-btn {
+            width: 100%;
+            margin-top: 20px;
+            padding: 13px;
+            background: var(--orange);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .run-btn:hover:not(:disabled) { background: #D4541F; }
+        .run-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* Run controls (pause/cancel) */
+        .run-controls {
+            display: none;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .run-controls.visible { display: flex; }
+
+        .pause-btn, .cancel-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: background 0.15s;
+        }
+        .pause-btn {
+            background: var(--hover-bg);
+            color: var(--text);
+        }
+        .pause-btn:hover:not(:disabled) { background: var(--hover-bg-strong); }
+        .cancel-btn {
+            background: rgba(255, 92, 92, 0.08);
+            color: var(--danger);
+            border-color: rgba(255, 92, 92, 0.25);
+        }
+        .cancel-btn:hover:not(:disabled) { background: rgba(255, 92, 92, 0.15); }
+
+        /* ── Results Panel ── */
+        .results {
+            display: none;
+            margin-top: 16px;
+            padding: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .results.visible { display: block; }
+
+        .stats {
+            display: flex;
+            gap: 0;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .stat {
+            flex: 1;
+            padding: 12px 16px;
+            text-align: center;
+            border-right: 1px solid var(--border);
+        }
+        .stat:last-child { border-right: none; }
+        .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+        .stat-value { font-size: 22px; font-weight: 700; }
+        .stat.success .stat-value { color: var(--success); }
+        .stat.failed  .stat-value { color: var(--danger); }
+        .stat.warning .stat-value { color: var(--warning); }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--orange);
+            width: 0%;
+            transition: width 0.2s ease;
+            border-radius: 2px;
+        }
+
+        .log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--log-bg);
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 11.5px;
+            line-height: 1.6;
+        }
+        .log::-webkit-scrollbar { width: 4px; }
+        .log::-webkit-scrollbar-track { background: transparent; }
+        .log::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+        .log-row { padding: 1px 0; }
+        .log-row.ok   { color: var(--success); }
+        .log-row.err  { color: var(--danger); }
+        .log-row.warn { color: var(--warning); }
+
+        .result-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+        .action-btn {
+            flex: 1;
+            min-width: 130px;
+            padding: 9px 14px;
+            background: var(--hover-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .action-btn:hover:not(:disabled) { background: var(--hover-bg-strong); }
+        .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .proceed-btn {
+            flex: 1;
+            min-width: 180px;
+            padding: 9px 14px;
+            background: rgba(255, 92, 92, 0.1);
+            border: 1px solid rgba(255, 92, 92, 0.3);
+            border-radius: 8px;
+            color: var(--danger);
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .proceed-btn:hover:not(:disabled) { background: rgba(255, 92, 92, 0.18); }
+        .proceed-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* Settings clear button — secondary danger */
+        .settings-clear {
+            margin-top: 14px;
+            padding: 9px 14px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            cursor: pointer;
+            width: 100%;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .settings-clear:hover { color: var(--danger); border-color: rgba(255, 92, 92, 0.3); }
+
+        /* Lookup tool */
+        .lookup-progress {
+            display: none;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: var(--hover-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 12.5px;
+            color: var(--muted);
+            text-align: center;
+        }
+        .lookup-progress.error {
+            color: var(--danger);
+            border-color: rgba(255, 92, 92, 0.25);
+            background: rgba(255, 92, 92, 0.05);
+            text-align: left;
+        }
+        .lookup-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 14px 0 8px;
+            font-size: 12px;
+            color: var(--muted);
+            flex-wrap: wrap;
+        }
+        .lookup-toolbar-counts { display: flex; gap: 14px; }
+        .lookup-toolbar-counts strong { color: var(--text); font-weight: 600; }
+        .lookup-link-btn {
+            background: transparent;
+            border: none;
+            color: var(--orange-light);
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 5px;
+        }
+        .lookup-link-btn:hover { background: var(--orange-dim); }
+        .lookup-table-wrap {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            max-height: 320px;
+            overflow: auto;
+            background: var(--log-bg);
+        }
+        .lookup-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+        .lookup-table-wrap::-webkit-scrollbar-track { background: transparent; }
+        .lookup-table-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+        table.lookup-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .lookup-table thead th {
+            position: sticky;
+            top: 0;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 9px 10px;
+            text-align: left;
+            font-size: 10.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            z-index: 1;
+        }
+        .lookup-table tbody td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            vertical-align: top;
+        }
+        .lookup-table tbody tr:last-child td { border-bottom: none; }
+        .lookup-table tbody tr:hover { background: var(--hover-bg); }
+        .lookup-table .uid-cell {
+            font-family: 'JetBrains Mono', 'Menlo', monospace;
+            font-size: 10.5px;
+            color: var(--muted);
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .lookup-table input[type="checkbox"] {
+            width: 14px; height: 14px;
+            margin: 0;
+            accent-color: var(--orange);
+            cursor: pointer;
+        }
+        .lookup-table .empty-row td {
+            padding: 16px;
+            color: var(--danger);
+            font-family: 'JetBrains Mono', 'Menlo', monospace;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        .primary-action-btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 9px 14px;
+            background: var(--orange-dim);
+            border: 1px solid rgba(232, 98, 42, 0.4);
+            border-radius: 8px;
+            color: var(--orange-light);
+            font-family: 'Inter', sans-serif;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .primary-action-btn:hover:not(:disabled) { background: rgba(232, 98, 42, 0.2); }
+        .primary-action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="Zuper-Horizontal-Logo.png" alt="Zuper">
+        <div class="header-right">
+            <span class="header-badge">Internal Tool</span>
+            <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+                <svg id="theme-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M14 9.5A6 6 0 016.5 2 6 6 0 1014 9.5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Settings card (hidden by default — toggle with Ctrl+Shift+A) -->
+    <div class="card" id="settings-card" style="display:none;">
+        <div class="card-header collapsible" id="settings-header" onclick="toggleSettings()">
+            <div class="card-header-icon">
+                <svg viewBox="0 0 20 20" fill="none">
+                    <path d="M10 13a3 3 0 100-6 3 3 0 000 6z" stroke="#E8622A" stroke-width="1.5"/>
+                    <path d="M16.2 12a1.4 1.4 0 00.28 1.54l.05.05a1.7 1.7 0 11-2.4 2.4l-.05-.05a1.4 1.4 0 00-1.54-.28 1.4 1.4 0 00-.85 1.28V17a1.7 1.7 0 11-3.4 0v-.07a1.4 1.4 0 00-.92-1.28 1.4 1.4 0 00-1.54.28l-.05.05a1.7 1.7 0 11-2.4-2.4l.05-.05a1.4 1.4 0 00.28-1.54 1.4 1.4 0 00-1.28-.85H3a1.7 1.7 0 110-3.4h.07a1.4 1.4 0 001.28-.92 1.4 1.4 0 00-.28-1.54l-.05-.05a1.7 1.7 0 112.4-2.4l.05.05a1.4 1.4 0 001.54.28h.07A1.4 1.4 0 009 2.07V2a1.7 1.7 0 113.4 0v.07a1.4 1.4 0 00.85 1.28 1.4 1.4 0 001.54-.28l.05-.05a1.7 1.7 0 112.4 2.4l-.05.05a1.4 1.4 0 00-.28 1.54v.07a1.4 1.4 0 001.28.85H17a1.7 1.7 0 110 3.4h-.07a1.4 1.4 0 00-1.28.85z" stroke="#E8622A" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="card-header-grow">
+                <h2>Settings</h2>
+                <p>Slack audit, concurrency, saved values</p>
+            </div>
+            <span class="chev">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+        </div>
+        <div class="card-body collapsed" id="settings-body">
+            <div class="form-grid">
+                <div class="form-group span2">
+                    <label for="webhook-url">Slack Webhook URL</label>
+                    <input type="text" id="webhook-url" placeholder="https://hooks.slack.com/services/…">
+                    <div class="helper-text">Audit summary of each run posted to this channel. Optional.</div>
+                </div>
+
+                <div class="form-group span2">
+                    <label for="concurrency">Concurrency</label>
+                    <div class="select-wrap">
+                        <select id="concurrency">
+                            <option value="1">1 — sequential (safest)</option>
+                            <option value="3" selected>3 — recommended</option>
+                            <option value="5">5</option>
+                            <option value="10">10 — fastest, may rate-limit</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group span2">
+                    <div class="toggle-row" style="margin-bottom:0;">
+                        <div class="cb-wrap">
+                            <input type="checkbox" id="remember-key">
+                            <div class="cb-box">
+                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                        </div>
+                        <div class="toggle-text">
+                            <strong>Remember API key</strong><br>
+                            <em>Saves locally in this browser only. Uncheck on shared machines.</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="settings-clear" onclick="clearSavedSettings()">Clear all saved settings</button>
+        </div>
+    </div>
+
+    <!-- Lookup card -->
+    <div class="card">
+        <div class="card-header collapsible" id="lookup-header" onclick="toggleLookupCard()">
+            <div class="card-header-icon">
+                <svg viewBox="0 0 20 20" fill="none">
+                    <circle cx="9" cy="9" r="5" stroke="#E8622A" stroke-width="1.5"/>
+                    <path d="M13 13l4 4" stroke="#E8622A" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="card-header-grow">
+                <h2>Lookup UIDs</h2>
+                <p>Find UIDs by PO number, title, vendor — for Purchase &amp; Material Orders</p>
+            </div>
+            <span class="chev">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+        </div>
+        <div class="card-body collapsed" id="lookup-body">
+            <div class="form-grid">
+                <div class="form-group span2">
+                    <label for="lookup-module">Module</label>
+                    <div class="select-wrap">
+                        <select id="lookup-module">
+                            <option value="purchase_order">Purchase Order</option>
+                            <option value="material_requests">Material Orders</option>
+                        </select>
+                    </div>
+                    <div class="helper-text">Uses Region &amp; API Key from the Bulk Delete form below.</div>
+                </div>
+
+                <div class="form-group span2">
+                    <label for="lookup-search">Filter (optional)</label>
+                    <input type="text" id="lookup-search" placeholder="Search by PO no, title, vendor…" oninput="renderLookupTable()">
+                </div>
+            </div>
+
+            <button type="button" class="run-btn" onclick="fetchLookupRecords()" id="lookup-fetch-btn">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="3.5" stroke="white" stroke-width="1.4"/><path d="M9 9l4 4" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+                Fetch records
+            </button>
+
+            <div class="lookup-progress" id="lookup-progress"></div>
+
+            <div id="lookup-results-wrap" style="display:none;">
+                <div class="lookup-toolbar">
+                    <div class="lookup-toolbar-counts">
+                        <span><strong id="lookup-count">0</strong> shown</span>
+                        <span><strong id="lookup-selected-count">0</strong> selected</span>
+                    </div>
+                    <button type="button" class="lookup-link-btn" onclick="toggleAllLookup()">Toggle all visible</button>
+                </div>
+                <div class="lookup-table-wrap">
+                    <table class="lookup-table">
+                        <thead>
+                            <tr>
+                                <th style="width:30px;"></th>
+                                <th>PO / MO No</th>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>UID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lookup-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="result-actions">
+                    <button type="button" class="action-btn" onclick="downloadLookupCsv()">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6.5l3 3 3-3M1.5 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Download all as CSV
+                    </button>
+                    <button type="button" class="primary-action-btn" id="lookup-send-btn" onclick="sendLookupToBulkDelete()" disabled>
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Send 0 selected to Bulk Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main card -->
+    <div class="card" id="bulk-delete-card">
+        <div class="card-header">
+            <div class="card-header-icon">
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 3H13M3 5H17M15 5L14.25 14.6C14.11 16.46 14.04 17.39 13.57 18.07C13.35 18.39 13.06 18.66 12.72 18.85C12.01 19.25 11.08 19.25 9.22 19.25H10.78C8.92 19.25 7.99 19.25 7.28 18.85C6.94 18.66 6.65 18.39 6.43 18.07C5.96 17.39 5.89 16.46 5.75 14.6L5 5" stroke="#E8622A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div>
+                <h1>Bulk Delete</h1>
+                <p>Permanently remove records by UID from any module</p>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="employee-id">Employee ID</label>
+                    <input type="text" id="employee-id" placeholder="e.g. EMP-1234" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="region">Region</label>
+                    <div class="select-wrap">
+                        <select id="region" required>
+                            <option value="stagingv2">Staging</option>
+                            <option value="us-east-1">us-east-1</option>
+                            <option value="us-west-1c">us-west-1c</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group span2">
+                    <label for="apikey">API Key</label>
+                    <input type="password" id="apikey" placeholder="Enter API key" required>
+                </div>
+
+                <div class="form-group span2">
+                    <label for="module">Module</label>
+                    <div class="select-wrap">
+                        <select id="module" required>
+                            <option value="organization">Organization</option>
+                            <option value="customers">Customer</option>
+                            <option value="property">Property</option>
+                            <option value="assets">Asset</option>
+                            <option value="product">Parts and Services</option>
+                            <option value="purchase_order">Purchase Order</option>
+                            <option value="material_requests">Material Orders</option>
+                            <option value="jobs">Job</option>
+                            <option value="invoice">Invoice</option>
+                            <option value="estimate">Quote / Estimate</option>
+                            <option value="service_contract">Service Contract</option>
+                            <option value="user">User</option>
+                            <option value="team">Team</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group span2">
+                    <label>UID File</label>
+                    <label class="file-label" for="file" id="file-label">
+                        <span class="file-label-icon">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6M9 2l4 4M9 2v4h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="file-label-text" id="file-label-text"><span>Choose file</span> or drag & drop — .csv, .txt, .xlsx</span>
+                    </label>
+                    <input type="file" id="file" accept=".csv,.txt,.xlsx,.xls" required>
+                    <div class="file-info" id="file-info"></div>
+                </div>
+
+                <div class="form-group span2" id="column-section" style="display:none;">
+                    <label for="column-select">UID Column</label>
+                    <div class="select-wrap">
+                        <select id="column-select"></select>
+                    </div>
+                </div>
+
+                <div class="form-group span2" style="display:none;" id="preview-wrap">
+                    <label>Preview</label>
+                    <div class="preview-panel" id="preview-panel"></div>
+                </div>
+
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="warning">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-top:1px">
+                    <path d="M8 1.5L1 13.5h14L8 1.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+                    <path d="M8 6v4M8 11.5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                <div class="warning-body">
+                    <strong>Real deletes are irreversible.</strong>
+                    Always use Dry run first to verify records exist before deleting anything.
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="cb-wrap">
+                    <input type="checkbox" id="dryrun-check" checked>
+                    <div class="cb-box">
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                </div>
+                <div class="toggle-text">
+                    <strong>Dry run</strong>
+                    <span class="pill safe" id="mode-pill">● Safe</span><br>
+                    <em>Checks records exist without deleting anything.</em>
+                </div>
+            </div>
+
+            <div class="toggle-row">
+                <div class="cb-wrap">
+                    <input type="checkbox" id="preflight-check">
+                    <div class="cb-box">
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                </div>
+                <div class="toggle-text">
+                    <strong>Pre-flight check</strong><br>
+                    <em>Skip records that have dependent data. Per-module checks are placeholder until configured.</em>
+                </div>
+            </div>
+
+            <button type="button" id="submit-btn" class="run-btn" onclick="runBulkDelete()">
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 3l8 4.5L4 12V3z" fill="white"/></svg>
+                Run
+            </button>
+
+            <div class="run-controls" id="run-controls">
+                <button type="button" class="pause-btn" id="pause-btn" onclick="togglePause()">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="3" y="2" width="2" height="8" fill="currentColor"/><rect x="7" y="2" width="2" height="8" fill="currentColor"/></svg>
+                    Pause
+                </button>
+                <button type="button" class="cancel-btn" onclick="cancelRun()">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    Cancel
+                </button>
+            </div>
+
+            <div class="results" id="results">
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value" id="stat-total">0</div>
+                    </div>
+                    <div class="stat success">
+                        <div class="stat-label" id="lbl-success">Found</div>
+                        <div class="stat-value" id="stat-success">0</div>
+                    </div>
+                    <div class="stat failed">
+                        <div class="stat-label" id="lbl-failed">Not Found</div>
+                        <div class="stat-value" id="stat-failed">0</div>
+                    </div>
+                    <div class="stat warning" id="stat-warning-col" style="display:none;">
+                        <div class="stat-label">Warnings</div>
+                        <div class="stat-value" id="stat-warning">0</div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+
+                <div class="log" id="log"></div>
+
+                <div class="result-actions">
+                    <button type="button" class="proceed-btn" id="proceed-delete-btn" onclick="proceedToDelete()" style="display:none;">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Proceed with delete
+                    </button>
+                    <button type="button" class="action-btn" id="retry-btn" onclick="retryFailed()" style="display:none;">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5a4.5 4.5 0 108-2.83M10 1.5v3h-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Retry failed
+                    </button>
+                    <button type="button" class="action-btn" id="download-btn" onclick="downloadLog()" style="display:none;">
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6.5l3 3 3-3M1.5 12h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Download Log
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* === Region & endpoints === */
+    const REGION_URLS = {
+        'stagingv2':  'https://stagingv2.zuperpro.com/api/',
+        'us-east-1':  'https://us-east-1.zuperpro.com/api/',
+        'us-west-1c': 'https://us-west-1c.zuperpro.com/api/'
+    };
+
+    /* All Zuper API calls route through our Vercel serverless proxy to bypass CORS.
+     * The proxy is whitelisted to *.zuperpro.com only — see /api/zuper-proxy.js. */
+    function proxiedFetch(targetUrl, opts = {}) {
+        return fetch('/api/zuper-proxy?target=' + encodeURIComponent(targetUrl), opts);
+    }
+
+    /* === Dependency check framework — placeholders ===
+     *
+     * Each entry receives (uid, baseUrl, apiKey) and must return:
+     *   { hasDependents: boolean, count: number, type: string }
+     *
+     * Drop in real implementations as you verify endpoints. While `null`,
+     * pre-flight is treated as not-configured for that module.
+     *
+     * Example for customers:
+     *   customers: async (uid, baseUrl, apiKey) => {
+     *     const res = await fetch(`${baseUrl}jobs?customer_uid=${encodeURIComponent(uid)}&count_only=true`, {
+     *       headers: { 'x-api-key': apiKey }
+     *     });
+     *     const data = await res.json();
+     *     const count = data?.data?.count || 0;
+     *     return { hasDependents: count > 0, count, type: 'jobs' };
+     *   }
+     */
+    const DEPENDENCY_CHECKS = {
+        organization:     null,
+        customers:        null,
+        property:         null,
+        assets:           null,
+        product:          null,
+        purchase_order:   null,
+        material_requests: null,
+        jobs:             null,
+        invoice:          null,
+        estimate:         null,
+        service_contract: null,
+        user:             null,
+        team:             null
+    };
+
+    /* === Persistence === */
+    const STORAGE_KEYS = {
+        region: 'bd_region', module: 'bd_module',
+        employeeId: 'bd_employee_id', rememberKey: 'bd_remember_key',
+        apiKey: 'bd_api_key', webhook: 'bd_webhook',
+        concurrency: 'bd_concurrency', theme: 'bd_theme'
+    };
+
+    function safeGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+    function safeSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
+    function safeDel(k) { try { localStorage.removeItem(k); } catch {} }
+
+    function loadSettings() {
+        const region = safeGet(STORAGE_KEYS.region);
+        if (region) document.getElementById('region').value = region;
+        const moduleVal = safeGet(STORAGE_KEYS.module);
+        if (moduleVal) document.getElementById('module').value = moduleVal;
+        const empId = safeGet(STORAGE_KEYS.employeeId);
+        if (empId) document.getElementById('employee-id').value = empId;
+        const remember = safeGet(STORAGE_KEYS.rememberKey) === 'true';
+        document.getElementById('remember-key').checked = remember;
+        if (remember) {
+            const key = safeGet(STORAGE_KEYS.apiKey);
+            if (key) document.getElementById('apikey').value = key;
+        }
+        const webhook = safeGet(STORAGE_KEYS.webhook);
+        if (webhook) document.getElementById('webhook-url').value = webhook;
+        const concurrency = safeGet(STORAGE_KEYS.concurrency);
+        if (concurrency) document.getElementById('concurrency').value = concurrency;
+        const theme = safeGet(STORAGE_KEYS.theme) || 'dark';
+        applyTheme(theme);
+    }
+
+    function saveSettings() {
+        safeSet(STORAGE_KEYS.region, document.getElementById('region').value);
+        safeSet(STORAGE_KEYS.module, document.getElementById('module').value);
+        safeSet(STORAGE_KEYS.employeeId, document.getElementById('employee-id').value);
+        const remember = document.getElementById('remember-key').checked;
+        safeSet(STORAGE_KEYS.rememberKey, remember);
+        if (remember) safeSet(STORAGE_KEYS.apiKey, document.getElementById('apikey').value);
+        else safeDel(STORAGE_KEYS.apiKey);
+        safeSet(STORAGE_KEYS.webhook, document.getElementById('webhook-url').value);
+        safeSet(STORAGE_KEYS.concurrency, document.getElementById('concurrency').value);
+    }
+
+    function clearSavedSettings() {
+        if (!confirm("Clear all saved settings? You'll need to re-enter everything next time.")) return;
+        Object.values(STORAGE_KEYS).forEach(k => safeDel(k));
+        document.getElementById('apikey').value = '';
+        document.getElementById('webhook-url').value = '';
+        document.getElementById('employee-id').value = '';
+        document.getElementById('remember-key').checked = false;
+        alert('Saved settings cleared.');
+    }
+
+    /* === Theme === */
+    const SUN_ICON = '<path d="M8 11a3 3 0 100-6 3 3 0 000 6zM8 1.5v1.5M8 13v1.5M2.5 8H1M15 8h-1.5M3.5 3.5l1 1M11.5 11.5l1 1M3.5 12.5l1-1M11.5 4.5l1-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>';
+    const MOON_ICON = '<path d="M14 9.5A6 6 0 016.5 2 6 6 0 1014 9.5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>';
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        document.getElementById('theme-icon').innerHTML = theme === 'light' ? SUN_ICON : MOON_ICON;
+    }
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        safeSet(STORAGE_KEYS.theme, next);
+    }
+
+    /* === Settings collapse === */
+    function toggleSettings() {
+        const header = document.getElementById('settings-header');
+        const body = document.getElementById('settings-body');
+        header.classList.toggle('open');
+        body.classList.toggle('collapsed');
+    }
+
+    /* === File parsing === */
+    let parsedRows = null;
+    let detectedHeaders = null;
+    let currentUids = [];
+
+    async function readFileAsRows(file) {
+        const name = file.name.toLowerCase();
+        const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls');
+        if (isExcel) {
+            if (typeof XLSX === 'undefined') throw new Error('Excel parser failed to load. Save as CSV.');
+            const buffer = await file.arrayBuffer();
+            const workbook = XLSX.read(buffer, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            if (!firstSheet) throw new Error('Excel file has no sheets.');
+            return XLSX.utils.sheet_to_json(firstSheet, { header: 1, blankrows: false });
+        }
+        const text = await file.text();
+        if (text.length > 2 && text.charCodeAt(0) === 0x50 && text.charCodeAt(1) === 0x4B) {
+            throw new Error('Looks like a binary/zip file with the wrong extension. Save as .csv or .xlsx.');
+        }
+        return text.split(/\r?\n/).filter(l => l.length > 0).map(line => line.split(',').map(c => c.trim()));
+    }
+
+    function looksLikeHeader(row) {
+        if (!row || row.length === 0) return false;
+        const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}/i;
+        return !row.some(c => uuidRe.test(String(c || '')));
+    }
+
+    function colLetter(idx) {
+        let label = '', n = idx;
+        while (n >= 0) {
+            label = String.fromCharCode(65 + (n % 26)) + label;
+            n = Math.floor(n / 26) - 1;
+        }
+        return label;
+    }
+
+    function populateColumnSelect() {
+        const select = document.getElementById('column-select');
+        select.innerHTML = '';
+        if (!parsedRows || parsedRows.length === 0) return;
+        const headerRow = looksLikeHeader(parsedRows[0]) ? parsedRows[0] : null;
+        detectedHeaders = headerRow;
+        const sampleRow = headerRow ? (parsedRows[1] || []) : (parsedRows[0] || []);
+        const numCols = Math.max(sampleRow.length, headerRow ? headerRow.length : 0, 1);
+        for (let i = 0; i < numCols; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            const headerCell = headerRow && headerRow[i] ? String(headerRow[i]).trim() : '';
+            const baseLabel = headerCell || `Column ${colLetter(i)}`;
+            const sample = sampleRow[i] != null ? String(sampleRow[i]).slice(0, 24) : '';
+            opt.textContent = `${baseLabel}${sample ? ' — ' + sample : ''}`;
+            select.appendChild(opt);
+        }
+        // Auto-pick first UUID-looking column
+        const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}/i;
+        const startRow = headerRow ? 1 : 0;
+        for (let c = 0; c < numCols; c++) {
+            const sample = parsedRows[startRow] && parsedRows[startRow][c];
+            if (sample && uuidRe.test(String(sample))) { select.value = c; break; }
+        }
+    }
+
+    function extractUidsForColumn(colIdx) {
+        if (!parsedRows) return [];
+        const startRow = detectedHeaders ? 1 : 0;
+        const uids = [];
+        for (let r = startRow; r < parsedRows.length; r++) {
+            const cell = parsedRows[r] && parsedRows[r][colIdx];
+            if (cell != null && String(cell).trim()) uids.push(String(cell).trim());
+        }
+        return uids;
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderPreview(uids) {
+        const wrap = document.getElementById('preview-wrap');
+        const panel = document.getElementById('preview-panel');
+        if (!uids.length) {
+            panel.classList.remove('visible');
+            wrap.style.display = 'none';
+            return;
+        }
+        panel.innerHTML = uids.map((u, i) =>
+            `<div class="preview-row"><span class="num">${i + 1}.</span>${escapeHtml(u)}</div>`
+        ).join('');
+        panel.classList.add('visible');
+        wrap.style.display = 'flex';
+    }
+
+    function setFileInfo(text, kind) {
+        const info = document.getElementById('file-info');
+        info.textContent = text;
+        info.className = 'file-info' + (kind ? ' ' + kind : '');
+    }
+
+    function updateFileInfoCount() {
+        if (currentUids.length === 0) {
+            setFileInfo('⚠ No UIDs detected in selected column.', 'warn');
+        } else {
+            setFileInfo(`✓ ${currentUids.length} UID${currentUids.length === 1 ? '' : 's'} detected.`, 'ok');
+        }
+    }
+
+    function updateFileLabel(input) {
+        const labelText = document.getElementById('file-label-text');
+        if (input.files && input.files[0]) {
+            labelText.innerHTML = '<span>' + escapeHtml(input.files[0].name) + '</span>';
+        } else {
+            labelText.innerHTML = '<span>Choose file</span> or drag & drop — .csv, .txt, .xlsx';
+        }
+    }
+
+    async function onFileChange(e) {
+        const file = e.target.files[0];
+        const colSection = document.getElementById('column-section');
+        updateFileLabel(e.target);
+        if (!file) {
+            setFileInfo('', '');
+            colSection.style.display = 'none';
+            renderPreview([]);
+            parsedRows = null; currentUids = [];
+            return;
+        }
+        try {
+            parsedRows = await readFileAsRows(file);
+            populateColumnSelect();
+            colSection.style.display = parsedRows.length > 0 ? 'flex' : 'none';
+            const colIdx = parseInt(document.getElementById('column-select').value, 10) || 0;
+            currentUids = extractUidsForColumn(colIdx);
+            renderPreview(currentUids);
+            updateFileInfoCount();
+        } catch (err) {
+            setFileInfo('✗ ' + err.message, 'err');
+            colSection.style.display = 'none';
+            renderPreview([]);
+            parsedRows = null; currentUids = [];
+        }
+    }
+
+    function onColumnChange() {
+        const colIdx = parseInt(document.getElementById('column-select').value, 10) || 0;
+        currentUids = extractUidsForColumn(colIdx);
+        renderPreview(currentUids);
+        updateFileInfoCount();
+    }
+
+    /* === Run state === */
+    let logRows = [];
+    let dryRunContext = null;
+    let lastFailedUids = [];
+    let lastRunContext = null;
+    let isPaused = false;
+    let isCancelled = false;
+    let isRunning = false;
+
+    function appendLog(uid, level, message) {
+        const log = document.getElementById('log');
+        const row = document.createElement('div');
+        row.className = 'log-row ' + level;
+        const icon = level === 'ok' ? '✓' : level === 'warn' ? '⚠' : '✗';
+        row.textContent = `${icon} ${uid} — ${message}`;
+        log.appendChild(row);
+        log.scrollTop = log.scrollHeight;
+        logRows.push({
+            uid,
+            status: level === 'ok' ? 'success' : level === 'warn' ? 'warning' : 'failed',
+            message
+        });
+    }
+
+    async function deleteOne(baseUrl, module, uid, apiKey, dryRun) {
+        const url = `${baseUrl}${module}/${encodeURIComponent(uid)}`;
+        const method = dryRun ? 'GET' : 'DELETE';
+        try {
+            const res = await proxiedFetch(url, {
+                method,
+                headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' }
+            });
+            if (res.ok) return { ok: true, message: dryRun ? `${res.status} found` : `${res.status} OK` };
+            let detail = '';
+            try {
+                const body = await res.json();
+                detail = body.message || body.error || JSON.stringify(body).slice(0, 120);
+            } catch {
+                detail = await res.text().then(t => t.slice(0, 120)).catch(() => '');
+            }
+            return { ok: false, message: `${res.status} ${detail}` };
+        } catch (err) {
+            return { ok: false, message: `Network error: ${err.message}` };
+        }
+    }
+
+    async function runDependencyCheck(module, uid, baseUrl, apiKey) {
+        const fn = DEPENDENCY_CHECKS[module];
+        if (!fn) return { configured: false };
+        try {
+            const result = await fn(uid, baseUrl, apiKey);
+            return { configured: true, ...result };
+        } catch (err) {
+            return { configured: true, hasDependents: false, error: err.message };
+        }
+    }
+
+    function togglePause() {
+        if (!isRunning) return;
+        isPaused = !isPaused;
+        document.getElementById('pause-btn').innerHTML = isPaused
+            ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 2v8l7-4-7-4z" fill="currentColor"/></svg> Resume'
+            : '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="3" y="2" width="2" height="8" fill="currentColor"/><rect x="7" y="2" width="2" height="8" fill="currentColor"/></svg> Pause';
+    }
+    function cancelRun() {
+        if (!isRunning) return;
+        if (!confirm('Cancel the current run? Progress so far is kept in the log.')) return;
+        isCancelled = true; isPaused = false;
+    }
+    async function waitWhilePaused() {
+        while (isPaused && !isCancelled) await new Promise(r => setTimeout(r, 200));
+    }
+
+    async function executeRun(baseUrl, module, apiKey, uids, dryRun, opts = {}) {
+        const submitBtn  = document.getElementById('submit-btn');
+        const proceedBtn = document.getElementById('proceed-delete-btn');
+        const retryBtn   = document.getElementById('retry-btn');
+        const runCtrl    = document.getElementById('run-controls');
+
+        // Reset UI
+        logRows = [];
+        document.getElementById('log').innerHTML = '';
+        document.getElementById('download-btn').style.display = 'none';
+        proceedBtn.style.display = 'none';
+        retryBtn.style.display = 'none';
+        document.getElementById('results').classList.add('visible');
+        document.getElementById('progress-fill').style.width = '0%';
+        runCtrl.classList.add('visible');
+        document.getElementById('pause-btn').innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="3" y="2" width="2" height="8" fill="currentColor"/><rect x="7" y="2" width="2" height="8" fill="currentColor"/></svg> Pause';
+
+        const preflightActive = !!opts.preflight && !dryRun && !!DEPENDENCY_CHECKS[module];
+        document.getElementById('stat-warning-col').style.display = preflightActive ? 'block' : 'none';
+
+        document.getElementById('lbl-success').textContent = dryRun ? 'Found' : 'Deleted';
+        document.getElementById('lbl-failed').textContent  = dryRun ? 'Not Found' : 'Failed';
+        document.getElementById('stat-total').textContent   = uids.length;
+        document.getElementById('stat-success').textContent = '0';
+        document.getElementById('stat-failed').textContent  = '0';
+        document.getElementById('stat-warning').textContent = '0';
+
+        submitBtn.disabled = true;
+        proceedBtn.disabled = true;
+        retryBtn.disabled = true;
+        submitBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="5.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M7.5 2a5.5 5.5 0 015.5 5.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg> ' + (dryRun ? 'Checking…' : 'Deleting…');
+
+        isRunning = true; isPaused = false; isCancelled = false;
+
+        const concurrency = parseInt(document.getElementById('concurrency').value, 10) || 1;
+        const foundUids = [];
+        const failedUids = [];
+        let success = 0, failed = 0, warnings = 0, completed = 0;
+
+        let nextIdx = 0;
+        async function worker() {
+            while (true) {
+                if (isCancelled) return;
+                await waitWhilePaused();
+                const i = nextIdx++;
+                if (i >= uids.length) return;
+                const uid = uids[i];
+
+                if (preflightActive) {
+                    const dep = await runDependencyCheck(module, uid, baseUrl, apiKey);
+                    if (dep.error) {
+                        warnings++;
+                        document.getElementById('stat-warning').textContent = warnings;
+                        appendLog(uid, 'warn', `Pre-flight error: ${dep.error}; proceeding`);
+                    } else if (dep.hasDependents) {
+                        warnings++; failed++; failedUids.push(uid);
+                        document.getElementById('stat-warning').textContent = warnings;
+                        document.getElementById('stat-failed').textContent = failed;
+                        appendLog(uid, 'warn', `Has ${dep.count} ${dep.type || 'dependent'} record(s); skipped`);
+                        completed++;
+                        document.getElementById('progress-fill').style.width = (completed / uids.length * 100) + '%';
+                        continue;
+                    }
+                }
+
+                const result = await deleteOne(baseUrl, module, uid, apiKey, dryRun);
+                if (result.ok) {
+                    success++;
+                    if (dryRun) foundUids.push(uid);
+                    document.getElementById('stat-success').textContent = success;
+                    appendLog(uid, 'ok', result.message);
+                } else {
+                    failed++; failedUids.push(uid);
+                    document.getElementById('stat-failed').textContent = failed;
+                    appendLog(uid, 'err', result.message);
+                }
+                completed++;
+                document.getElementById('progress-fill').style.width = (completed / uids.length * 100) + '%';
+            }
+        }
+
+        const workers = [];
+        for (let w = 0; w < Math.min(concurrency, uids.length); w++) workers.push(worker());
+        await Promise.all(workers);
+
+        isRunning = false;
+        runCtrl.classList.remove('visible');
+        submitBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 3l8 4.5L4 12V3z" fill="white"/></svg> Run';
+        submitBtn.disabled = false;
+        proceedBtn.disabled = false;
+        retryBtn.disabled = false;
+        document.getElementById('download-btn').style.display = 'flex';
+
+        if (dryRun && foundUids.length > 0 && !isCancelled) {
+            dryRunContext = { baseUrl, module, apiKey, foundUids, region: document.getElementById('region').value };
+            proceedBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Delete ' + foundUids.length + ' found record(s)';
+            proceedBtn.style.display = 'flex';
+        } else if (!dryRun) {
+            dryRunContext = null;
+        }
+
+        if (failedUids.length > 0 && !isCancelled) {
+            lastFailedUids = failedUids;
+            lastRunContext = { baseUrl, module, apiKey, dryRun, preflight: opts.preflight };
+            retryBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5a4.5 4.5 0 108-2.83M10 1.5v3h-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg> Retry ' + failedUids.length + ' failed';
+            retryBtn.style.display = 'flex';
+        } else {
+            lastFailedUids = [];
+        }
+
+        await sendSlackAudit({
+            employeeId: document.getElementById('employee-id').value.trim(),
+            region: document.getElementById('region').value,
+            module,
+            mode: dryRun ? 'dry-run' : 'delete',
+            preflight: !!opts.preflight,
+            total: uids.length,
+            success, failed, warnings,
+            cancelled: isCancelled
+        });
+    }
+
+    async function runBulkDelete() {
+        const employeeId = document.getElementById('employee-id').value.trim();
+        const region     = document.getElementById('region').value;
+        const apiKey     = document.getElementById('apikey').value.trim();
+        const moduleVal  = document.getElementById('module').value;
+        const dryRun     = document.getElementById('dryrun-check').checked;
+        const preflight  = document.getElementById('preflight-check').checked;
+
+        if (!employeeId || !apiKey) {
+            alert('Please fill in Employee ID and API Key.');
+            return;
+        }
+        if (!currentUids.length) {
+            alert('No UIDs detected. Upload a file and pick the right column.');
+            return;
+        }
+        const baseUrl = REGION_URLS[region];
+        if (!baseUrl) { alert('Unknown region.'); return; }
+
+        if (preflight && !dryRun && !DEPENDENCY_CHECKS[moduleVal]) {
+            if (!confirm(`Pre-flight check is not yet configured for "${moduleVal}". Records will be deleted without checking for dependents. Continue?`)) return;
+        }
+
+        const action = dryRun ? 'Check' : 'Delete';
+        const note   = dryRun ? '\n\nDry run — no records will be deleted.' : '\n\nThis cannot be undone.';
+        const previewSample = currentUids.slice(0, 5).join('\n') + (currentUids.length > 5 ? `\n…and ${currentUids.length - 5} more` : '');
+        if (!confirm(`${action} ${currentUids.length} ${moduleVal} record(s) in ${region}?\n\nFirst UIDs:\n${previewSample}${note}`)) return;
+
+        saveSettings();
+        await executeRun(baseUrl, moduleVal, apiKey, currentUids, dryRun, { preflight });
+    }
+
+    async function proceedToDelete() {
+        if (!dryRunContext) { alert('No dry-run results to proceed from.'); return; }
+        const { baseUrl, module, apiKey, foundUids, region } = dryRunContext;
+        const preflight = document.getElementById('preflight-check').checked;
+        const previewSample = foundUids.slice(0, 5).join('\n') + (foundUids.length > 5 ? `\n…and ${foundUids.length - 5} more` : '');
+        if (!confirm(`Permanently DELETE ${foundUids.length} record(s)?\n\nModule: ${module}\nRegion: ${region}\n\nFirst UIDs:\n${previewSample}\n\nThis cannot be undone.`)) return;
+        dryRunContext = null;
+        await executeRun(baseUrl, module, apiKey, foundUids, false, { preflight });
+    }
+
+    async function retryFailed() {
+        if (!lastFailedUids.length || !lastRunContext) return;
+        const { baseUrl, module, apiKey, dryRun, preflight } = lastRunContext;
+        if (!confirm(`Retry ${lastFailedUids.length} failed record(s)?`)) return;
+        const uidsToRetry = lastFailedUids.slice();
+        lastFailedUids = [];
+        await executeRun(baseUrl, module, apiKey, uidsToRetry, dryRun, { preflight });
+    }
+
+    /* === Slack audit === */
+    async function sendSlackAudit(summary) {
+        const url = document.getElementById('webhook-url').value.trim();
+        if (!url) return;
+        const text = [
+            `*Bulk Delete Run* — ${summary.mode}${summary.cancelled ? ' (cancelled)' : ''}`,
+            `• User: \`${summary.employeeId || 'unknown'}\``,
+            `• Region: \`${summary.region}\` • Module: \`${summary.module}\``,
+            `• Pre-flight: ${summary.preflight ? 'on' : 'off'}`,
+            `• Total: ${summary.total} • ✅ ${summary.success} • ❌ ${summary.failed}${summary.warnings ? ' • ⚠ ' + summary.warnings : ''}`
+        ].join('\n');
+        try {
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+        } catch (err) {
+            console.warn('Slack audit failed:', err);
+        }
+    }
+
+    /* === Download log === */
+    function downloadLog() {
+        const header = 'uid,status,message\n';
+        const csv = header + logRows.map(r =>
+            `"${(r.uid || '').replace(/"/g, '""')}","${r.status}","${(r.message || '').replace(/"/g, '""')}"`
+        ).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `bulk-delete-log-${Date.now()}.csv`; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    /* === Mode pill === */
+    document.getElementById('dryrun-check').addEventListener('change', function() {
+        const pill = document.getElementById('mode-pill');
+        if (this.checked) {
+            pill.className = 'pill safe';
+            pill.textContent = '● Safe';
+        } else {
+            pill.className = 'pill danger';
+            pill.textContent = '● Live';
+        }
+    });
+
+    /* === Wiring === */
+    document.getElementById('file').addEventListener('change', onFileChange);
+    document.getElementById('column-select').addEventListener('change', onColumnChange);
+    document.getElementById('region').addEventListener('change', saveSettings);
+    document.getElementById('module').addEventListener('change', saveSettings);
+    document.getElementById('employee-id').addEventListener('blur', saveSettings);
+    document.getElementById('apikey').addEventListener('blur', saveSettings);
+    document.getElementById('webhook-url').addEventListener('blur', saveSettings);
+    document.getElementById('concurrency').addEventListener('change', saveSettings);
+    document.getElementById('remember-key').addEventListener('change', saveSettings);
+
+    /* === Hidden admin panel — toggle with Ctrl/Cmd + Shift + A === */
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
+            e.preventDefault();
+            const card = document.getElementById('settings-card');
+            const isHidden = card.style.display === 'none';
+            card.style.display = isHidden ? '' : 'none';
+            if (isHidden) {
+                // Auto-expand the body when revealing, so it's immediately usable
+                document.getElementById('settings-header').classList.add('open');
+                document.getElementById('settings-body').classList.remove('collapsed');
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    });
+
+    /* === Lookup tool === */
+    let lookupRecords = [];
+    let lookupSelected = new Set();
+
+    const LOOKUP_FIELDS = {
+        purchase_order: {
+            identifier: ['purchase_order_number', 'po_number', 'po_no', 'number'],
+            title: ['purchase_order_title', 'po_title', 'title', 'subject', 'description'],
+            status: ['purchase_order_status', 'po_status', 'status'],
+            uid: ['purchase_order_uid', 'po_uid', 'uid', '_id', 'id']
+        },
+        material_requests: {
+            identifier: ['material_request_number', 'request_number', 'mr_number', 'mo_number', 'number'],
+            title: ['material_request_title', 'mr_title', 'title', 'subject', 'description'],
+            status: ['material_request_status', 'mr_status', 'request_status', 'status'],
+            uid: ['material_request_uid', 'mr_uid', 'uid', '_id', 'id']
+        }
+    };
+
+    function toggleLookupCard() {
+        const header = document.getElementById('lookup-header');
+        const body = document.getElementById('lookup-body');
+        header.classList.toggle('open');
+        body.classList.toggle('collapsed');
+    }
+
+    function setLookupProgress(text, isError) {
+        const el = document.getElementById('lookup-progress');
+        if (!text) { el.style.display = 'none'; el.classList.remove('error'); return; }
+        el.textContent = text;
+        el.style.display = 'block';
+        el.classList.toggle('error', !!isError);
+    }
+
+    function findField(record, candidates) {
+        for (const k of candidates) {
+            if (record[k] != null && record[k] !== '') return { field: k, value: record[k] };
+        }
+        return null;
+    }
+
+    function findFieldValueStr(record, candidates) {
+        const found = findField(record, candidates);
+        return found ? String(found.value) : '';
+    }
+
+    async function fetchLookupRecords() {
+        const region = document.getElementById('region').value;
+        const apiKey = document.getElementById('apikey').value.trim();
+        const moduleVal = document.getElementById('lookup-module').value;
+
+        if (!apiKey) { alert('Enter the API Key in the Bulk Delete form below first.'); return; }
+        const baseUrl = REGION_URLS[region];
+        if (!baseUrl) { alert('Unknown region.'); return; }
+
+        const btn = document.getElementById('lookup-fetch-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="5.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M7.5 2a5.5 5.5 0 015.5 5.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg> Fetching…';
+
+        lookupRecords = [];
+        lookupSelected = new Set();
+        document.getElementById('lookup-results-wrap').style.display = 'none';
+        setLookupProgress('Fetching page 1…', false);
+
+        try {
+            let page = 1;
+            const limit = 100;
+            const maxPages = 50;
+
+            while (page <= maxPages) {
+                // Try Zuper's typical paginated list pattern
+                const url = `${baseUrl}${moduleVal}?page=${page}&count=${limit}`;
+                const res = await proxiedFetch(url, { method: 'GET', headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } });
+
+                if (!res.ok) {
+                    const body = await res.text().then(t => t.slice(0, 300)).catch(() => '');
+                    throw new Error(`${res.status} ${res.statusText} — ${body}`);
+                }
+
+                const data = await res.json();
+                // Try several common shapes
+                const records = Array.isArray(data) ? data
+                    : (Array.isArray(data.data) ? data.data
+                    : (Array.isArray(data.results) ? data.results
+                    : (Array.isArray(data.records) ? data.records : [])));
+
+                if (records.length === 0) break;
+                lookupRecords.push(...records);
+                setLookupProgress(`Fetched ${lookupRecords.length} record(s) so far…`, false);
+
+                if (records.length < limit) break;
+                page++;
+            }
+
+            if (lookupRecords.length === 0) {
+                setLookupProgress('No records returned. Either the account has no records of this type, or the API response shape differs from expected.', false);
+                return;
+            }
+
+            // Verify we can find a UID field
+            const fields = LOOKUP_FIELDS[moduleVal];
+            const uidCandidate = findField(lookupRecords[0], fields.uid);
+            if (!uidCandidate) {
+                const keys = Object.keys(lookupRecords[0]).join(', ');
+                setLookupProgress(`Auto-detect failed — couldn't find a UID field. The first record's keys are: ${keys}\n\nShare these with the developer to add support.`, true);
+                return;
+            }
+
+            setLookupProgress(`Fetched ${lookupRecords.length} ${moduleVal === 'purchase_order' ? 'purchase order' : 'material order'}(s). UID field detected: "${uidCandidate.field}".`, false);
+            renderLookupTable();
+            document.getElementById('lookup-results-wrap').style.display = 'block';
+        } catch (err) {
+            setLookupProgress('Error: ' + err.message, true);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="3.5" stroke="white" stroke-width="1.4"/><path d="M9 9l4 4" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg> Fetch records';
+        }
+    }
+
+    function renderLookupTable() {
+        const tbody = document.getElementById('lookup-tbody');
+        const moduleVal = document.getElementById('lookup-module').value;
+        const fields = LOOKUP_FIELDS[moduleVal] || LOOKUP_FIELDS.purchase_order;
+        const filter = document.getElementById('lookup-search').value.trim().toLowerCase();
+
+        if (lookupRecords.length === 0) {
+            tbody.innerHTML = '';
+            document.getElementById('lookup-count').textContent = '0';
+            return;
+        }
+
+        const uidField = findField(lookupRecords[0], fields.uid);
+        if (!uidField) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Could not detect UID field — see message above.</td></tr>';
+            return;
+        }
+
+        let visible = lookupRecords;
+        if (filter) {
+            visible = lookupRecords.filter(r => {
+                const idVal = findFieldValueStr(r, fields.identifier).toLowerCase();
+                const titleVal = findFieldValueStr(r, fields.title).toLowerCase();
+                // Also search vendor name if present
+                const vendorVal = (r.vendor_name || (r.vendor && r.vendor.name) || '').toString().toLowerCase();
+                return idVal.includes(filter) || titleVal.includes(filter) || vendorVal.includes(filter);
+            });
+        }
+
+        if (visible.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:14px; color:var(--muted); text-align:center;">No matches.</td></tr>';
+            document.getElementById('lookup-count').textContent = '0';
+            updateLookupSelectedCount();
+            return;
+        }
+
+        tbody.innerHTML = visible.map(r => {
+            const uid = r[uidField.field];
+            const id = findFieldValueStr(r, fields.identifier) || '—';
+            const title = findFieldValueStr(r, fields.title) || '—';
+            const status = findFieldValueStr(r, fields.status) || '—';
+            const checked = lookupSelected.has(uid) ? 'checked' : '';
+            const titleTrim = title.length > 60 ? title.slice(0, 57) + '…' : title;
+            return `<tr>
+                <td><input type="checkbox" data-uid="${escapeHtml(String(uid))}" ${checked} onchange="onLookupRowToggle(this)"></td>
+                <td>${escapeHtml(String(id))}</td>
+                <td title="${escapeHtml(title)}">${escapeHtml(titleTrim)}</td>
+                <td>${escapeHtml(String(status))}</td>
+                <td class="uid-cell" title="${escapeHtml(String(uid))}">${escapeHtml(String(uid))}</td>
+            </tr>`;
+        }).join('');
+
+        document.getElementById('lookup-count').textContent = `${visible.length}${visible.length !== lookupRecords.length ? ' / ' + lookupRecords.length : ''}`;
+        updateLookupSelectedCount();
+    }
+
+    function onLookupRowToggle(checkbox) {
+        const uid = checkbox.getAttribute('data-uid');
+        if (checkbox.checked) lookupSelected.add(uid);
+        else lookupSelected.delete(uid);
+        updateLookupSelectedCount();
+    }
+
+    function updateLookupSelectedCount() {
+        const n = lookupSelected.size;
+        document.getElementById('lookup-selected-count').textContent = n;
+        const btn = document.getElementById('lookup-send-btn');
+        btn.disabled = n === 0;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 3l3.5 3.5L7.5 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Send ${n} selected to Bulk Delete`;
+    }
+
+    function toggleAllLookup() {
+        const checkboxes = document.querySelectorAll('#lookup-tbody input[type="checkbox"]');
+        if (checkboxes.length === 0) return;
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+            const uid = cb.getAttribute('data-uid');
+            if (cb.checked) lookupSelected.add(uid);
+            else lookupSelected.delete(uid);
+        });
+        updateLookupSelectedCount();
+    }
+
+    function sendLookupToBulkDelete() {
+        if (lookupSelected.size === 0) return;
+        const moduleVal = document.getElementById('lookup-module').value;
+
+        // Populate bulk delete state from the lookup selection
+        currentUids = Array.from(lookupSelected);
+        parsedRows = null;
+        detectedHeaders = null;
+
+        // Set the matching module in the bulk delete dropdown
+        document.getElementById('module').value = moduleVal;
+        saveSettings();
+
+        // Update file UI to reflect lookup-sourced UIDs
+        const moduleLabel = moduleVal === 'purchase_order' ? 'Purchase Orders' : 'Material Orders';
+        document.getElementById('file-label-text').innerHTML = `<span>From Lookup: ${currentUids.length} ${moduleLabel}</span>`;
+        document.getElementById('file').value = '';
+        document.getElementById('column-section').style.display = 'none';
+        setFileInfo(`✓ ${currentUids.length} UID${currentUids.length === 1 ? '' : 's'} loaded from Lookup tool.`, 'ok');
+        renderPreview(currentUids);
+
+        // Smooth scroll to bulk delete card
+        document.getElementById('bulk-delete-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function downloadLookupCsv() {
+        if (lookupRecords.length === 0) return;
+        const moduleVal = document.getElementById('lookup-module').value;
+        const fields = LOOKUP_FIELDS[moduleVal] || LOOKUP_FIELDS.purchase_order;
+        const uidField = findField(lookupRecords[0], fields.uid);
+        if (!uidField) { alert('Could not detect UID field.'); return; }
+
+        // Order: UID first, then identifier/title/status, then everything else alphabetically
+        const allKeys = new Set();
+        lookupRecords.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
+        const priorityKeys = [
+            uidField.field,
+            ...fields.identifier.filter(k => allKeys.has(k)),
+            ...fields.title.filter(k => allKeys.has(k)),
+            ...fields.status.filter(k => allKeys.has(k))
+        ];
+        const seen = new Set(priorityKeys);
+        const restKeys = Array.from(allKeys).filter(k => !seen.has(k)).sort();
+        const orderedKeys = [...priorityKeys, ...restKeys];
+
+        const escapeCell = v => {
+            if (v == null) return '';
+            if (typeof v === 'object') v = JSON.stringify(v);
+            const s = String(v).replace(/"/g, '""');
+            return /[",\n\r]/.test(s) ? `"${s}"` : s;
+        };
+
+        const csv = [
+            orderedKeys.join(','),
+            ...lookupRecords.map(r => orderedKeys.map(k => escapeCell(r[k])).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${moduleVal}-lookup-${Date.now()}.csv`; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    /* Re-render lookup table when module switches (in case data was already loaded) */
+    document.getElementById('lookup-module').addEventListener('change', () => {
+        if (lookupRecords.length > 0) renderLookupTable();
+    });
+
+    loadSettings();
+    </script>
+</body>
+</html>
